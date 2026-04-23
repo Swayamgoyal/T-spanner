@@ -1,0 +1,18 @@
+[
+  {
+    "n": 500,
+    "operations": 3500,
+    "with_compression_ms": 1.99,
+    "without_compression_ms": 1.27,
+    "speedup": 0.64,
+    "path_compressions": 5737
+  },
+  {
+    "n": 1000,
+    "operations": 7000,
+    "with_compression_ms": 3.66,
+    "without_compression_ms": 2.81,
+    "speedup": 0.77,
+    "path_compressions": 11515
+  }
+]

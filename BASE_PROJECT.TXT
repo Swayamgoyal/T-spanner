@@ -1,0 +1,4 @@
+[Number 7] t-Spanner: A very good problem to study is obtain a subgraph where
+distances are at most t times the original distances. The currently popular
+algorithm for this construction is due to Baswana and Sen. This project would
+implement this algorithm for a t-spanner. 

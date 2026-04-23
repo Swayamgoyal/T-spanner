@@ -1,0 +1,46 @@
+[
+  {
+    "n": 496,
+    "m": 1230,
+    "k": 2,
+    "t": 3,
+    "python_time_ms": 2.32,
+    "python_edges": 1228,
+    "cpp_time_ms": null,
+    "cpp_edges": null,
+    "speedup": null
+  },
+  {
+    "n": 496,
+    "m": 1230,
+    "k": 3,
+    "t": 5,
+    "python_time_ms": 3.04,
+    "python_edges": 1229,
+    "cpp_time_ms": null,
+    "cpp_edges": null,
+    "speedup": null
+  },
+  {
+    "n": 990,
+    "m": 2495,
+    "k": 2,
+    "t": 3,
+    "python_time_ms": 4.68,
+    "python_edges": 2494,
+    "cpp_time_ms": null,
+    "cpp_edges": null,
+    "speedup": null
+  },
+  {
+    "n": 990,
+    "m": 2495,
+    "k": 3,
+    "t": 5,
+    "python_time_ms": 5.52,
+    "python_edges": 2493,
+    "cpp_time_ms": null,
+    "cpp_edges": null,
+    "speedup": null
+  }
+]

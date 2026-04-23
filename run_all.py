@@ -61,12 +61,26 @@ def run_seeds(quick=False):
     run_seed_variance(num_seeds=num_seeds)
 
 
+def run_language(quick=False):
+    from src.python.experiments.language_comparison import run_language_comparison
+    sizes = [500, 1000] if quick else [500, 1000, 2000, 5000]
+    run_language_comparison(sizes=sizes)
+
+
+def run_advanced(quick=False):
+    from src.python.experiments.advanced_experiment import run_advanced_experiment
+    num_pairs = 100 if quick else 300
+    run_advanced_experiment(num_pairs=num_pairs)
+
+
 EXPERIMENTS = {
     "scaling": run_scaling,
     "stretch": run_stretch,
     "fault": run_fault,
     "routing": run_routing,
     "seeds": run_seeds,
+    "language": run_language,
+    "advanced": run_advanced,
 }
 
 

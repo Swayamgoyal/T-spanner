@@ -1,35 +1,9 @@
-@article{peleg1989spanners,
-  title={Graph spanners},
-  author={Peleg, David and Sch{\"a}ffer, Alejandro A},
-  journal={Journal of Graph Theory},
-  volume={13},
-  number={1},
-  pages={99--116},
-  year={1989},
-  publisher={Wiley Online Library}
-}
+% ============================================================
+% t-Spanner Project — Complete Bibliography (18 References)
+% Person A (core algorithm papers) + Person B (expanded survey)
+% ============================================================
 
-@article{baswana2007simple,
-  title={A simple and linear time randomized algorithm for computing sparse spanners in weighted graphs},
-  author={Baswana, Surender and Sen, Sandeep},
-  journal={Random Structures \& Algorithms},
-  volume={30},
-  number={4},
-  pages={532--563},
-  year={2007},
-  publisher={Wiley Online Library}
-}
-
-@article{althofer1993sparse,
-  title={On sparse spanners of weighted graphs},
-  author={Alth{\"o}fer, Ingo and Das, Gautam and Dobkin, David and Joseph, Deborah and Soares, Jos{\'e}},
-  journal={Discrete \& Computational Geometry},
-  volume={9},
-  number={1},
-  pages={81--100},
-  year={1993},
-  publisher={Springer}
-}
+% ─── Foundational Papers ───
 
 @article{awerbuch1985complexity,
   title={Complexity of network synchronization},
@@ -42,23 +16,109 @@
   publisher={ACM New York, NY, USA}
 }
 
-@article{chechik2015fault,
-  title={Fault-tolerant spanners for general graphs},
-  author={Chechik, Shiri and Langberg, Michael and Peleg, David and Roditty, Liam},
-  journal={SIAM Journal on Computing},
-  volume={44},
+@inproceedings{peleg1989optimal,
+  title={An optimal synchronizer for the hypercube},
+  author={Peleg, David and Ullman, Jeffrey D},
+  booktitle={Proceedings of the twenty-first annual ACM symposium on Theory of computing},
+  pages={77--85},
+  year={1989}
+}
+
+@article{peleg1989spanners,
+  title={Graph spanners},
+  author={Peleg, David and Sch{\"a}ffer, Alejandro A},
+  journal={Journal of Graph Theory},
+  volume={13},
   number={1},
-  pages={28--44},
-  year={2015},
+  pages={99--116},
+  year={1989},
+  publisher={Wiley Online Library}
+}
+
+% ─── Greedy Spanner ───
+
+@article{althofer1993sparse,
+  title={On sparse spanners of weighted graphs},
+  author={Alth{\"o}fer, Ingo and Das, Gautam and Dobkin, David and Joseph, Deborah and Soares, Jos{\'e}},
+  journal={Discrete \& Computational Geometry},
+  volume={9},
+  number={1},
+  pages={81--100},
+  year={1993},
+  publisher={Springer}
+}
+
+@article{das1993applications,
+  title={Applications of spanners in VLSI design},
+  author={Das, Gautam and Heffernan, Paul J and Narasimhan, Giri},
+  journal={Proceedings of the 9th annual symposium on Computational geometry},
+  pages={296--305},
+  year={1993}
+}
+
+% ─── Distance Oracles & Approximation ───
+
+@article{aingworth1999fast,
+  title={Fast estimation of diameter and shortest paths (without matrix multiplication)},
+  author={Aingworth, Donald and Chekuri, Chandra and Indyk, Piotr and Motwani, Rajeev},
+  journal={SIAM Journal on Computing},
+  volume={28},
+  number={4},
+  pages={1167--1181},
+  year={1999},
   publisher={SIAM}
 }
 
-@inproceedings{ahmed2020streaming,
-  title={Streaming spanners: algorithms and lower bounds},
-  author={Ahmed, Nesreen K and Rossi, Ryan A and Zhou, Rong and Willke, Theodore L and Kong, Danai and Eldardiry, Hoda},
-  booktitle={Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining},
-  pages={1586--1596},
-  year={2020}
+@inproceedings{thorup2001approximate,
+  title={Approximate distance oracles},
+  author={Thorup, Mikkel and Zwick, Uri},
+  booktitle={Proceedings of the thirty-third annual ACM symposium on Theory of computing},
+  pages={1--10},
+  year={2001}
+}
+
+@article{halperin2003polynomial,
+  title={A polynomial time approximation algorithm for the minimum stretch spanning tree problem},
+  author={Halperin, Eran and Zwick, Uri},
+  journal={SIAM Journal on Discrete Mathematics},
+  volume={16},
+  number={4},
+  pages={562--581},
+  year={2003},
+  publisher={SIAM}
+}
+
+@article{roditty2004deterministic,
+  title={Deterministic constructions of distance oracles and spanners},
+  author={Roditty, Liam and Thorup, Mikkel and Zwick, Uri},
+  journal={International Colloquium on Automata, Languages, and Programming},
+  pages={929--940},
+  year={2004},
+  publisher={Springer}
+}
+
+% ─── Mixed and Additive Spanners ───
+
+@article{elkin2004mixed,
+  title={$(1+\epsilon, \beta)$-spanners in linear time},
+  author={Elkin, Michael and Peleg, David},
+  journal={SIAM Journal on Computing},
+  volume={33},
+  number={2},
+  pages={377--401},
+  year={2004},
+  publisher={SIAM}
+}
+
+@article{coppersmith2006sparse,
+  title={Sparse sourcewise and pairwise distance preservers},
+  author={Coppersmith, Don and Elkin, Michael},
+  journal={SIAM Journal on Discrete Mathematics},
+  volume={20},
+  number={2},
+  pages={463--501},
+  year={2006},
+  publisher={SIAM}
 }
 
 @inproceedings{woodruff2010additive,
@@ -70,15 +130,28 @@
   organization={Springer}
 }
 
-@article{elkin2004(1+eps,beta),
-  title={$(1+\epsilon, \beta)$-spanners in linear time},
-  author={Elkin, Michael and Peleg, David},
-  journal={SIAM Journal on Computing},
-  volume={33},
-  number={2},
-  pages={377--401},
-  year={2004},
-  publisher={SIAM}
+% ─── A* and Road Networks ───
+
+@article{goldberg2005computing,
+  title={Computing the shortest path: A* search meets graph theory},
+  author={Goldberg, Andrew V and Harrelson, Chris},
+  journal={SODA},
+  volume={5},
+  pages={156--165},
+  year={2005}
+}
+
+% ─── The Baswana-Sen Breakthrough ───
+
+@article{baswana2007simple,
+  title={A simple and linear time randomized algorithm for computing sparse spanners in weighted graphs},
+  author={Baswana, Surender and Sen, Sandeep},
+  journal={Random Structures \& Algorithms},
+  volume={30},
+  number={4},
+  pages={532--563},
+  year={2007},
+  publisher={Wiley Online Library}
 }
 
 @article{baswana2008dynamic,
@@ -92,55 +165,33 @@
   publisher={Elsevier}
 }
 
-@inproceedings{thorup2001approximate,
-  title={Approximate distance oracles},
-  author={Thorup, Mikkel and Zwick, Uri},
-  booktitle={Proceedings of the thirty-third annual ACM symposium on Theory of computing},
-  pages={1--10},
-  year={2001}
-}
+% ─── Fault Tolerance ───
 
-@article{goldberg2005computing,
-  title={Computing the shortest path: A* search meets graph theory},
-  author={Goldberg, Andrew V and Harrelson, Chris},
-  journal={SODA},
-  volume={5},
-  pages={156--165},
-  year={2005}
-}
-
-@inproceedings{peleg1989optimal,
-  title={An optimal synchronizer for the hypercube},
-  author={Peleg, David and Ullman, Jeffrey D},
-  booktitle={Proceedings of the twenty-first annual ACM symposium on Theory of computing},
-  pages={77--85},
-  year={1989}
-}
-
-@article{das1993applications,
-  title={Applications of spanners in VLSI design},
-  author={Das, Gautam and Heffernan, Paul J and Narasimhan, Giri},
-  journal={Proceedings of the 9th annual symposium on Computational geometry},
-  pages={296--305},
-  year={1993}
-}
-
-@article{roditty2004deterministic,
-  title={Deterministic constructions of distance oracles and spanners},
-  author={Roditty, Liam and Thorup, Mikkel and Zwick, Uri},
-  journal={International Colloquium on Automata, Languages, and Programming},
-  pages={929--940},
-  year={2004},
-  publisher={Springer}
-}
-
-@article{halperin2003polynomial,
-  title={A polynomial time approximation algorithm for the minimum stretch spanning tree problem},
-  author={Halperin, Eran and Zwick, Uri},
-  journal={SIAM Journal on Discrete Mathematics},
-  volume={16},
-  number={4},
-  pages={562--581},
-  year={2003},
+@article{chechik2015fault,
+  title={Fault-tolerant spanners for general graphs},
+  author={Chechik, Shiri and Langberg, Michael and Peleg, David and Roditty, Liam},
+  journal={SIAM Journal on Computing},
+  volume={44},
+  number={1},
+  pages={28--44},
+  year={2015},
   publisher={SIAM}
+}
+
+% ─── Streaming ───
+
+@inproceedings{kapralov2014spanners,
+  title={Spanners and sparsifiers in dynamic streams},
+  author={Kapralov, Michael and Woodruff, David P},
+  booktitle={Proceedings of the 2014 ACM symposium on Principles of distributed computing},
+  pages={272--281},
+  year={2014}
+}
+
+@inproceedings{ahmed2020streaming,
+  title={Streaming spanners: algorithms and lower bounds},
+  author={Ahmed, Nesreen K and Rossi, Ryan A and Zhou, Rong and Willke, Theodore L and Kong, Danai and Eldardiry, Hoda},
+  booktitle={Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining},
+  pages={1586--1596},
+  year={2020}
 }

@@ -342,37 +342,70 @@ The D3.js visualizer at `viz/react-d3/index.html` has:
 
 ## 🔗 Person A vs Person B Split
 
-### Person A (You — This Codebase) = Everything That Runs
-- ✅ All Python algorithm code
+### Person A = Everything That Runs ✅
+- ✅ All Python algorithm code (Baswana-Sen, Greedy, HAS)
 - ✅ All C++ code
-- ✅ All experiment scripts
-- ✅ All data loaders
-- ✅ All visualizations
-- ✅ All unit tests
+- ✅ All experiment scripts (7 experiments)
+- ✅ All data loaders (SNAP, synthetic, OSM)
+- ✅ All visualizations (D3.js + Streamlit)
+- ✅ All unit tests (20 tests)
 
-### Person B (Partner) = Everything That Interprets
-- History of t-spanners (Peleg 1989 → Baswana-Sen 2007)
-- Theoretical proofs & stretch-size tradeoff
-- Real-world use cases deep dive
-- Cross-language comparison analysis (using YOUR data)
-- Pareto frontier interpretation
-- Full report assembly
-- BFS vs DFS formal derivation
+### Person B = Everything That Interprets ✅
+- ✅ Full historical narrative of t-spanners (1985–2024) — `research/history_notes.md`
+- ✅ Theoretical foundations with proofs (Erdős girth, BFS vs DFS) — `research/theory_foundations.md`
+- ✅ Real-world use cases deep dive (7 domains) — `research/applications.md`
+- ✅ Stretch factor & sparseness ratio analysis — `analysis/stretch_analysis.py`
+- ✅ Pareto frontier plots (publication-quality) — `analysis/plotter.py`
+- ✅ 7 research questions with analysis — `research/open_questions.md`
+- ✅ Cross-language data structure comparison — `analysis/cross_language_analysis.py`
+- ✅ Topology-specific behavior analysis (report cards) — `research/topology_analysis.md`
+- ✅ Comparative literature review (7 spanner variants) — `research/comparative_literature.md`
+- ✅ Full report assembly (13 chapters, 18 references) — `report/report.md`
+
+### Person B File Map
+
+```
+analysis/
+├── plotter.py                    # Publication-quality Pareto, energy proxy, HAS comparison plots
+├── stretch_analysis.py           # Stretch metrics computation + report tables
+├── cross_language_analysis.py    # Language/data structure comparison analysis
+└── topology_report_cards.py      # Per-topology summary card generator
+
+research/
+├── history_notes.md              # Chapter 2: Full historical narrative (1985–2024)
+├── theory_foundations.md          # Chapter 3: Proofs, pseudocode, BFS vs DFS
+├── applications.md               # Chapter 5: 7 real-world use cases with metrics
+├── open_questions.md              # Chapter 8: 7 research questions with analysis
+├── comparative_literature.md      # Chapter 9: Survey of 7 spanner variants
+├── topology_analysis.md           # Chapter 7: Topology report cards
+├── contributors.md               # Key contributor bios
+├── impact_study.md               # Satellite constellation application
+└── presentation_script.md        # Presentation talking points
+
+report/
+├── report.md                     # Full 13-chapter integrated report
+└── references.bib                # 18 BibTeX references
+```
 
 ### How They Connect
 | Topic | Person A's Output | Person B Uses It For |
 |-------|------------------|---------------------|
-| BFS vs DFS | Empirical timing in comments | Formal complexity proof in report |
-| Multi-language | Python + C++ implementations | "Implementation Across Languages" chapter |
+| BFS vs DFS | Empirical timing in comments | Formal complexity proof + failure mode analysis |
+| Multi-language | Python + C++ implementations | Language × Data Structure comparison chapter |
 | Fault tolerance | Experiment data + repair code | Connection to f-fault-tolerant spanner literature |
-| Pareto frontier | Raw (stretch, sparseness) data | Publication-quality figure + interpretation |
-| Seed variance | 50-seed box plots | "Does random seed matter?" analysis |
+| Pareto frontier | Raw (stretch, sparseness) CSVs | Publication-quality annotated Pareto figure |
+| Seed variance | 10-seed benchmark data | CV analysis confirming algorithmic stability |
+| Scaling benchmark | Time vs n data | Empirical verification of O(km) complexity |
+| HAS experiment | 3-way comparison data | Improvement analysis across topologies |
+| Topology data | Per-topology stretch/sparseness | "Topology Report Cards" with scientific interpretation |
 
 ---
 
 ## 📝 Quick Reference Card
 
 ```bash
+# ── Person A: Algorithms & Experiments ──
+
 # Run all tests
 python -X utf8 tests/test_core.py
 
@@ -399,18 +432,43 @@ cd src/cpp && make all
 
 # Run C++ spanner
 echo "100 500" | ./spanner_cpp --algo baswana --k 2 --verify
+
+# ── Person B: Analysis & Plotting ──
+
+# Generate publication-quality plots
+python analysis/plotter.py
+
+# Run stretch & sparseness analysis
+python analysis/stretch_analysis.py
+
+# Run cross-language comparison analysis
+python analysis/cross_language_analysis.py
+
+# Generate topology report cards
+python analysis/topology_report_cards.py
 ```
 
 ---
 
 ## 📚 Key References
 
-1. **Baswana & Sen** (2007) — "A simple and linear time randomized algorithm for computing sparse spanners in weighted graphs" — *Random Structures & Algorithms*
-2. **Althöfer et al.** (1993) — "On sparse spanners of weighted graphs" — *Discrete & Computational Geometry*
-3. **Peleg & Schäffer** (1989) — "Graph spanners" — *Journal of Graph Theory*
-4. **SNAP Datasets** — https://snap.stanford.edu/data/
+1. **Awerbuch** (1985) — "Complexity of Network Synchronization" — *JACM*
+2. **Peleg & Schäffer** (1989) — "Graph Spanners" — *Journal of Graph Theory*
+3. **Althöfer et al.** (1993) — "On Sparse Spanners of Weighted Graphs" — *DCG*
+4. **Thorup & Zwick** (2001) — "Approximate Distance Oracles" — *STOC*
+5. **Elkin & Peleg** (2004) — "$(1+\epsilon, \beta)$-Spanners in Linear Time" — *SIAM J. Comput.*
+6. **Goldberg & Harrelson** (2005) — "A* Search Meets Graph Theory" — *SODA*
+7. **Baswana & Sen** (2007) — "Linear Time Randomized Sparse Spanners" — *Random Structures & Algorithms*
+8. **Baswana** (2008) — "Dynamic Maintenance of Sparse Spanners" — *J. Discrete Algorithms*
+9. **Chechik et al.** (2009) — "Fault-Tolerant Spanners" — *STOC / SIAM J. Comput.*
+10. **Woodruff** (2010) — "Additive Spanners in Nearly Linear Time" — *ICALP*
+11. **Ahmed et al.** (2020) — "Streaming Spanners" — *KDD*
+12. **SNAP Datasets** — https://snap.stanford.edu/data/
+
+Full bibliography (18 references): [references.bib](report/references.bib)
 
 ---
 
-*Person A — Systems, Implementation & Engineering*  
+*Person A — Systems, Implementation & Engineering*
+*Person B — Research, Analysis & Writing*
 *Algorithm Engineering, Semester 4*

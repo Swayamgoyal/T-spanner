@@ -4,43 +4,43 @@
     "m": 1230,
     "k": 2,
     "t": 3,
-    "python_time_ms": 2.32,
-    "python_edges": 1228,
-    "cpp_time_ms": null,
-    "cpp_edges": null,
-    "speedup": null
+    "python_time_ms": 1.93,
+    "python_edges": 1229,
+    "cpp_time_ms": 0.95,
+    "cpp_edges": 1230,
+    "speedup": 2.03
   },
   {
     "n": 496,
     "m": 1230,
     "k": 3,
     "t": 5,
-    "python_time_ms": 3.04,
-    "python_edges": 1229,
-    "cpp_time_ms": null,
-    "cpp_edges": null,
-    "speedup": null
+    "python_time_ms": 3.39,
+    "python_edges": 1230,
+    "cpp_time_ms": 1.23,
+    "cpp_edges": 1230,
+    "speedup": 2.76
   },
   {
     "n": 990,
     "m": 2495,
     "k": 2,
     "t": 3,
-    "python_time_ms": 4.68,
-    "python_edges": 2494,
-    "cpp_time_ms": null,
-    "cpp_edges": null,
-    "speedup": null
+    "python_time_ms": 6.03,
+    "python_edges": 2495,
+    "cpp_time_ms": 2.38,
+    "cpp_edges": 2492,
+    "speedup": 2.53
   },
   {
     "n": 990,
     "m": 2495,
     "k": 3,
     "t": 5,
-    "python_time_ms": 5.52,
-    "python_edges": 2493,
-    "cpp_time_ms": null,
-    "cpp_edges": null,
-    "speedup": null
+    "python_time_ms": 6.03,
+    "python_edges": 2495,
+    "cpp_time_ms": 2.4,
+    "cpp_edges": 2495,
+    "speedup": 2.51
   }
 ]

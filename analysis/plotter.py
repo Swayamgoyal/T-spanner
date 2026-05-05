@@ -249,4 +249,4 @@ if __name__ == "__main__":
     plot_stretch_distribution_from_csv()
     plot_has_comparison()
 
-    //print("\n[DONE] All Person B plots generated.")
+    print("\n[DONE] All Person B plots generated.")

@@ -311,10 +311,10 @@ SpannerResult baswana_sen(Graph& g, int k, int seed = 42) {
     }
     
     // Build spanner graph
-    for (auto& [edge, _] : spanner_edge_set) {
-        double w = edge_weights[pack(edge.first, edge.second)];
-        result.spanner.add_edge(edge.first, edge.second, w);
-        result.spanner_edges.push_back({edge.first, edge.second, w});
+    for (auto& [u, v] : spanner_edge_set) {
+        double w = edge_weights[pack(u, v)];
+        result.spanner.add_edge(u, v, w);
+        result.spanner_edges.push_back({u, v, w});
     }
     for (int v : g.nodes) {
         result.spanner.add_node(v);

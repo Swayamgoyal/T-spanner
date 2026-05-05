@@ -487,7 +487,7 @@ A $t$-spanner (typically $t=3$ or $t=5$) provides a sparse routing backbone:
 ### Concrete Metrics
 | 5-spanner | 2,100 | 1.22 | ~7 weeks |
 
-![Energy Proxy](../data/figures/energy_proxy.png)
+![Energy Proxy](../results/plots/energy_proxy.png)
 *Figure 1: Energy savings in WSNs via spanner-based topology control.*
 
 - **Simple Language**: This bar chart shows that as we use thinner spanners (more stretch), the batteries in our sensors last up to 3 times longer because they don't have to talk as much.
@@ -570,42 +570,42 @@ To ensure the reproducibility of our $O(km)$ timing results, all experiments wer
 - **Python**: 3.8.10 with NetworkX 2.5
 
 ### 6.1 Scaling Benchmark: Theory vs. Practice
-![Scaling Benchmark](../data/figures/scaling_benchmark.png)
+![Scaling Benchmark](../results/plots/scaling_benchmark.png)
 *Figure 2: Algorithmic scaling across varying node counts.*
 
 - **Simple Language**: This line graph shows that our program's speed stays in a straight line as the network grows, which is great. It means if the network gets twice as big, it only takes twice as long.
 - **Math Breakdown**: We plot Time $T$ against Edge Count $m$. The **Linear Regression** $T = am + b$ shows a correlation coefficient $R^2 > 0.99$. This confirms the $O(km)$ theoretical complexity.
 
 ### 6.2 Stretch vs. Sparseness Analysis
-![Stretch Analysis](../data/figures/stretch_analysis.png)
+![Stretch Analysis](../results/plots/stretch_analysis.png)
 *Figure 3: Empirical stretch vs. theoretical bounds.*
 
 - **Simple Language**: This graph shows that if we allow paths to be 3x or 5x longer, we can delete almost 90% of the connections in the network without the network breaking.
 - **Math Breakdown**: The x-axis is the stretch $t$. The y-axis is the **Density Ratio** $\rho = |E'|/|E|$. The curve follows an exponential decay $\rho(t) \approx \rho_0 \cdot e^{-\alpha t}$. For scale-free graphs, $\alpha$ is large, meaning density drops rapidly.
 
 ### 6.2 HAS Benchmark: The 50% Optimization Delta
-![3-Way Comparison](../data/figures/advanced_3way_comparison.png)
+![3-Way Comparison](../results/plots/advanced_3way_comparison.png)
 *Figure 3: HAS vs. Baswana-Sen vs. Greedy.*
 
 - **Simple Language**: Our new "HAS" algorithm is much smarter than the basic one. In road networks, it saves 30% more space by finding shortcuts that the basic algorithm misses.
 - **Math Breakdown**: We measure the **Optimization Gain** $\Delta_{HAS} = \frac{|E_{BS}| - |E_{HAS}|}{|E_{BS}|}$. On Grid graphs, $\Delta_{HAS} \approx 0.309$, proving that our greedy pruning phase is highly effective at identifying redundant planar edges.
 
 ### 6.3 Pareto Frontier: The Efficiency "Sweet Spot"
-![Pareto Frontier](../data/figures/pareto_frontier_pub.png)
+![Pareto Frontier](../results/plots/pareto_frontier_pub.png)
 *Figure 4: Pareto frontier of stretch vs. sparseness.*
 
 - **Simple Language**: This is the "Goldilocks" chart. It helps us find the point where the network is fast enough but also cheap enough to build.
 - **Math Breakdown**: Each point is a pair $(\text{avg\_stretch}, \rho)$. We seek to minimize the distance to the origin $(1, 0)$ in the normalized space. The points on the **Lower-Left Frontier** are the "best" configurations.
 
 ### 6.4 Fault Tolerance & Resilience
-![Fault Tolerance](../data/figures/fault_tolerance.png)
+![Fault Tolerance](../results/plots/fault_tolerance.png)
 *Figure 5: Network resilience under node failure.*
 
 - **Simple Language**: If you attack the most popular people in a social network, the network falls apart quickly. But road networks are much tougher and stay connected even if you block many roads.
 - **Math Breakdown**: Connectivity $C \in [0,1]$ is a function of failure $f$. For scale-free graphs, the derivative $dC/df$ is highly negative for $f < 0.1$, indicating a **Fragile State**.
 
 ### 6.5 Interactive Visualizer Output
-![Visualizer](../data/figures/visualizer_screenshot.png)
+![Visualizer](../results/plots/visualizer_screenshot.png)
 *Figure 6: Force-directed visualization of spanner clusters.*
 
 - **Simple Language**: This is a direct look at how our algorithm "thinks." The neon lines are the essential highways we kept, and the purple bubbles show the clusters. You can see how most of the original messy connections (the gray lines) are gone, but the network still looks perfectly connected.
@@ -664,13 +664,13 @@ Road networks have no hubs. Without high-degree nodes, clusters are small and lo
 
 While the algorithm is theoretically efficient at $O(km)$, the choice of language and data structures drastically impacts real-world latency.
 
-![Language Comparison](../data/figures/language_comparison.png)
+![Language Comparison](../results/plots/language_comparison.png)
 *Figure 7: Performance scaling of Python vs. C++ implementation.*
 
 - **Simple Language**: This chart shows that C++ is a specialized "racing car" for this math. It can process a 100,000-edge graph in the time it takes Python to process just 2,000 edges.
 - **Math Breakdown**: The x-axis is $n$. The y-axis is $T(n)$. Python shows a steeper slope $\beta_{py} \gg \beta_{cpp}$. This is due to the **Global Interpreter Lock (GIL)** and overhead in Python's high-level object management.
 
-![Union-Find Benchmark](../data/figures/union_find_benchmark.png)
+![Union-Find Benchmark](../results/plots/union_find_benchmark.png)
 *Figure 8: Impact of Path Compression on cluster maintenance.*
 
 - **Simple Language**: This is the most technical part of the code. We used a trick called "Path Compression" to make searching for clusters instant. Without it, the program would slow down to a crawl as the network gets more complex.
@@ -719,7 +719,7 @@ The greedy spanner must verify: $d_H(u, v) > (2k-1) \cdot w(u, v)$. BFS finds th
 ### Q2: Does the Choice of Random Seed Matter?
 CV < 0.003 — the algorithm is **extremely stable** across seeds.
 
-![Seed Variance](../data/figures/seed_variance.png)
+![Seed Variance](../results/plots/seed_variance.png)
 *Figure 9: Stability of spanner density across 10 random seeds.*
 
 - **Simple Language**: This dot plot shows that no matter what "random" start we pick, the results always end up being the same. It's not a matter of luck.

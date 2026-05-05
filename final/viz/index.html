@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>t-Spanner Interactive Visualizer</title>
+    <meta name="description" content="Interactive visualization of t-Spanner graph algorithms using Baswana-Sen and Greedy methods">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #111127;
+            --bg-card: #161632;
+            --bg-hover: #1e1e42;
+            --accent-primary: #667eea;
+            --accent-secondary: #764ba2;
+            --accent-success: #34d399;
+            --accent-warning: #fbbf24;
+            --accent-danger: #f87171;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: rgba(102, 126, 234, 0.2);
+            --glow: rgba(102, 126, 234, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* ─── Header ─── */
+        .header {
+            text-align: center;
+            padding: 30px 20px 20px;
+            background: linear-gradient(180deg, rgba(102,126,234,0.08) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+            margin-top: 6px;
+        }
+
+        /* ─── Layout ─── */
+        .container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            min-height: calc(100vh - 120px);
+        }
+
+        /* ─── Sidebar ─── */
+        .sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            margin-top: 24px;
+        }
+
+        .sidebar h3:first-child { margin-top: 0; }
+
+        .control-group {
+            margin-bottom: 16px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.85em;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        select, input[type="number"], input[type="file"] {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9em;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--glow);
+        }
+
+        /* Stretch slider */
+        .slider-container {
+            position: relative;
+            padding: 8px 0;
+        }
+
+        .slider-value {
+            text-align: center;
+            font-size: 2.4em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .slider-label {
+            text-align: center;
+            font-size: 0.8em;
+            color: var(--text-muted);
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: var(--bg-card);
+            border-radius: 3px;
+            outline: none;
+            margin: 12px 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--glow);
+            transition: transform 0.15s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .slider-ticks {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 2px;
+        }
+
+        .slider-ticks span {
+            font-size: 0.75em;
+            color: var(--text-muted);
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 11px 16px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px var(--glow);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ─── Main Content ─── */
+        .main {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Metrics bar */
+        .metrics-bar {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .metric {
+            text-align: center;
+            padding: 12px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .metric:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-primary);
+        }
+
+        .metric-value {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .metric-label {
+            font-size: 0.7em;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-top: 4px;
+        }
+
+        /* Graph canvas */
+        .graph-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #graph-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Phase replay bar */
+        .phase-bar {
+            padding: 12px 20px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .phase-bar .btn {
+            width: auto;
+            margin: 0;
+            padding: 8px 16px;
+        }
+
+        .phase-info {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            flex: 1;
+        }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(22, 22, 50, 0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            font-size: 0.82em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .legend-item:last-child { margin-bottom: 0; }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        /* Loading spinner */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(22, 22, 50, 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--accent-primary);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.82em;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+            z-index: 100;
+        }
+
+        .tooltip.visible { opacity: 1; }
+
+        /* Status badge */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+
+        .status-valid {
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--accent-success);
+        }
+
+        .status-warning {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--accent-warning);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .container { grid-template-columns: 280px 1fr; }
+            .metrics-bar { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>t-Spanner Interactive Visualizer</h1>
+    <p>Baswana-Sen Algorithm &mdash; Upload a graph, adjust stretch, watch it thin out</p>
+</div>
+
+<div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h3>Graph Source</h3>
+        <div class="control-group">
+            <label for="graph-preset">Preset Graph</label>
+            <select id="graph-preset">
+                <option value="random-50">Random (50 nodes)</option>
+                <option value="random-100" selected>Random (100 nodes)</option>
+                <option value="random-200">Random (200 nodes)</option>
+                <option value="grid-7">Grid (7×7)</option>
+                <option value="grid-10">Grid (10×10)</option>
+                <option value="scalefree-50">Scale-Free (50 nodes)</option>
+                <option value="scalefree-100">Scale-Free (100 nodes)</option>
+                <option value="custom">Upload Custom...</option>
+            </select>
+        </div>
+
+        <div id="upload-section" class="control-group" style="display:none">
+            <label>Upload Edge List (CSV: u,v per line)</label>
+            <input type="file" id="file-upload" accept=".txt,.csv,.edgelist">
+        </div>
+
+        <h3>Stretch Parameter</h3>
+        <div class="slider-container">
+            <div class="slider-value" id="t-display">t = 3</div>
+            <div class="slider-label">Spanner stretch ≤ t × original distance</div>
+            <input type="range" id="t-slider" min="3" max="9" step="2" value="3">
+            <div class="slider-ticks">
+                <span>3</span><span>5</span><span>7</span><span>9</span>
+            </div>
+        </div>
+
+        <h3>Algorithm</h3>
+        <div class="control-group">
+            <select id="algorithm">
+                <option value="baswana-sen" selected>Baswana-Sen</option>
+                <option value="hybrid">Hybrid Adaptive (HAS)</option>
+                <option value="greedy">Greedy (BFS)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="seed">Random Seed</label>
+            <input type="number" id="seed" value="42" min="0" max="9999">
+        </div>
+
+        <h3>Actions</h3>
+        <button class="btn btn-primary" id="btn-build" onclick="buildSpanner()">
+            Build Spanner
+        </button>
+        <button class="btn btn-secondary" id="btn-replay" onclick="replayPhases()" disabled>
+            ▶ Replay Phases
+        </button>
+        <button class="btn btn-secondary" onclick="resetView()">
+            Reset View
+        </button>
+
+        <h3>Phase Logs</h3>
+        <div id="phase-logs" style="font-size: 0.82em; color: var(--text-secondary); max-height: 200px; overflow-y: auto;">
+            <em>Build a spanner to see phase logs</em>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+        <div class="metrics-bar">
+            <div class="metric">
+                <div class="metric-value" id="m-nodes">-</div>
+                <div class="metric-label">Nodes</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="m-orig-edges">-</div>
+                <div class="metric-label">Original Edges</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="m-spanner-edges">-</div>
+                <div class="metric-label">Spanner Edges</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="m-ratio">-</div>
+                <div class="metric-label">Sparseness</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="m-time">-</div>
+                <div class="metric-label">Time (ms)</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="m-stretch">-</div>
+                <div class="metric-label">Status</div>
+            </div>
+        </div>
+
+        <div class="graph-container" id="graph-container">
+            <svg id="graph-svg"></svg>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--accent-primary)"></div>
+                    <span>Spanner edges</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #333; border: 1px dashed #555"></div>
+                    <span>Removed edges</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--accent-danger); border-radius: 50%"></div>
+                    <span>Unclustered nodes</span>
+                </div>
+            </div>
+            <div class="tooltip" id="tooltip"></div>
+        </div>
+
+        <div class="phase-bar">
+            <button class="btn btn-secondary" id="btn-phase-play" onclick="replayPhases()" disabled>▶ Play</button>
+            <div class="phase-info" id="phase-info">Select a graph and build a spanner to begin</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// t-Spanner JS Implementation  
+// ═══════════════════════════════════════════════════════════════
+
+// ─── State ────────────────────────────────────────────────────
+let graph = { nodes: [], edges: [] };       // Original graph
+let spannerResult = null;                     // Current spanner result
+let simulation = null;                        // D3 force simulation
+let currentPhase = -1;                        // For phase replay
+
+// ─── Graph Generation ────────────────────────────────────────
+
+function generateRandomGraph(n, p, seed) {
+    const rng = mulberry32(seed);
+    const nodes = Array.from({length: n}, (_, i) => ({id: i}));
+    const edges = [];
+    for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+            if (rng() < p) {
+                edges.push({source: i, target: j, weight: 1});
+            }
+        }
+    }
+    return {nodes, edges};
+}
+
+function generateGridGraph(side) {
+    const n = side * side;
+    const nodes = Array.from({length: n}, (_, i) => ({id: i}));
+    const edges = [];
+    for (let r = 0; r < side; r++) {
+        for (let c = 0; c < side; c++) {
+            const id = r * side + c;
+            if (c + 1 < side) edges.push({source: id, target: id + 1, weight: 1});
+            if (r + 1 < side) edges.push({source: id, target: id + side, weight: 1});
+        }
+    }
+    return {nodes, edges};
+}
+
+function generateScaleFreeGraph(n, m, seed) {
+    const rng = mulberry32(seed);
+    const nodes = Array.from({length: n}, (_, i) => ({id: i}));
+    const edges = [];
+    const degree = new Array(n).fill(0);
+    
+    // Start with a complete graph on m+1 nodes
+    for (let i = 0; i <= m && i < n; i++) {
+        for (let j = i + 1; j <= m && j < n; j++) {
+            edges.push({source: i, target: j, weight: 1});
+            degree[i]++;
+            degree[j]++;
+        }
+    }
+    
+    // Preferential attachment
+    for (let i = m + 1; i < n; i++) {
+        const targets = new Set();
+        let totalDegree = degree.reduce((a, b) => a + b, 0);
+        while (targets.size < m) {
+            let r = rng() * totalDegree;
+            for (let j = 0; j < i; j++) {
+                r -= degree[j];
+                if (r <= 0 && !targets.has(j)) {
+                    targets.add(j);
+                    break;
+                }
+            }
+        }
+        for (const t of targets) {
+            edges.push({source: i, target: t, weight: 1});
+            degree[i]++;
+            degree[t]++;
+        }
+    }
+    return {nodes, edges};
+}
+
+// ─── Baswana-Sen Algorithm (JS Port) ─────────────────────────
+
+function baswaanaSen(graph, k, seed) {
+    const rng = mulberry32(seed);
+    const start = performance.now();
+    const n = graph.nodes.length;
+    const p = Math.pow(n, -1.0 / k);
+    
+    // Adjacency list
+    const adj = {};
+    for (const node of graph.nodes) {
+        adj[node.id] = [];
+    }
+    for (const e of graph.edges) {
+        const u = typeof e.source === 'object' ? e.source.id : e.source;
+        const v = typeof e.target === 'object' ? e.target.id : e.target;
+        adj[u].push({node: v, weight: e.weight || 1});
+        adj[v].push({node: u, weight: e.weight || 1});
+    }
+    
+    // Phase 0: every vertex is its own cluster
+    let cluster = {};
+    for (const node of graph.nodes) cluster[node.id] = node.id;
+    
+    const spannerEdges = new Set();
+    const spannerEdgeList = [];
+    const phaseLogs = [];
+    const phaseEdges = []; // For replay animation: edges added per phase
+    
+    function addEdge(u, v) {
+        const key = Math.min(u, v) + ',' + Math.max(u, v);
+        if (!spannerEdges.has(key)) {
+            spannerEdges.add(key);
+            spannerEdgeList.push({source: u, target: v, weight: 1});
+            return true;
+        }
+        return false;
+    }
+    
+    // Phases 1 to k-1
+    for (let phase = 1; phase < k; phase++) {
+        let edgesAdded = 0;
+        let clustersSurviving = 0;
+        let verticesUnclustered = 0;
+        const phaseNewEdges = [];
+        
+        // Sample centers
+        const currentCenters = new Set(Object.values(cluster).filter(c => c !== null));
+        const sampled = new Set();
+        for (const c of currentCenters) {
+            if (rng() < p) {
+                sampled.add(c);
+                clustersSurviving++;
+            }
+        }
+        
+        const newCluster = {};
+        
+        for (const node of graph.nodes) {
+            const v = node.id;
+            if (cluster[v] === null) {
+                newCluster[v] = null;
+                continue;
+            }
+            
+            // Group neighbors by cluster
+            const lightestToCluster = {};
+            for (const {node: u, weight: w} of adj[v]) {
+                const uc = cluster[u];
+                if (uc === null) continue;
+                if (!(uc in lightestToCluster) || w < lightestToCluster[uc].w) {
+                    lightestToCluster[uc] = {u, w};
+                }
+            }
+            
+            if (sampled.has(cluster[v])) {
+                // Case A: cluster survived
+                newCluster[v] = cluster[v];
+                for (const [nc, {u, w}] of Object.entries(lightestToCluster)) {
+                    if (parseInt(nc) !== cluster[v] && !sampled.has(parseInt(nc))) {
+                        if (addEdge(v, u)) {
+                            edgesAdded++;
+                            phaseNewEdges.push({source: v, target: u});
+                        }
+                    }
+                }
+            } else {
+                // Case B: cluster did NOT survive
+                let bestU = null, bestW = Infinity, bestC = null;
+                for (const [nc, {u, w}] of Object.entries(lightestToCluster)) {
+                    if (sampled.has(parseInt(nc)) && w < bestW) {
+                        bestU = u; bestW = w; bestC = parseInt(nc);
+                    }
+                }
+                
+                if (bestU !== null) {
+                    newCluster[v] = bestC;
+                    if (addEdge(v, bestU)) {
+                        edgesAdded++;
+                        phaseNewEdges.push({source: v, target: bestU});
+                    }
+                    for (const [nc, {u, w}] of Object.entries(lightestToCluster)) {
+                        if (parseInt(nc) !== bestC && !sampled.has(parseInt(nc))) {
+                            if (addEdge(v, u)) {
+                                edgesAdded++;
+                                phaseNewEdges.push({source: v, target: u});
+                            }
+                        }
+                    }
+                } else {
+                    newCluster[v] = null;
+                    verticesUnclustered++;
+                    for (const [nc, {u, w}] of Object.entries(lightestToCluster)) {
+                        if (addEdge(v, u)) {
+                            edgesAdded++;
+                            phaseNewEdges.push({source: v, target: u});
+                        }
+                    }
+                }
+            }
+        }
+        
+        cluster = newCluster;
+        phaseEdges.push(phaseNewEdges);
+        phaseLogs.push({
+            phase,
+            edgesAdded,
+            clustersSurviving,
+            verticesUnclustered,
+        });
+    }
+    
+    // Final: unclustered add all edges
+    const finalEdges = [];
+    for (const node of graph.nodes) {
+        if (cluster[node.id] === null) {
+            for (const {node: u} of adj[node.id]) {
+                if (addEdge(node.id, u)) {
+                    finalEdges.push({source: node.id, target: u});
+                }
+            }
+        }
+    }
+    phaseEdges.push(finalEdges);
+    phaseLogs.push({phase: 'final', edgesAdded: finalEdges.length});
+    
+    const time = performance.now() - start;
+    
+    return {
+        spannerEdges: spannerEdgeList,
+        spannerEdgeSet: spannerEdges,
+        clusterAssignments: cluster,
+        phaseLogs,
+        phaseEdges,
+        constructionTime: time,
+        sparseness: spannerEdgeList.length / Math.max(graph.edges.length, 1),
+    };
+}
+
+// ─── Greedy Spanner (JS) ─────────────────────────────────────
+
+function greedySpanner(graph, t) {
+    const start = performance.now();
+    const n = graph.nodes.length;
+    
+    // Adjacency for spanner
+    const spannerAdj = {};
+    for (const node of graph.nodes) spannerAdj[node.id] = [];
+    
+    const spannerEdges = new Set();
+    const spannerEdgeList = [];
+    
+    // Sort edges by weight
+    const sortedEdges = [...graph.edges].sort((a, b) => (a.weight || 1) - (b.weight || 1));
+    
+    // BFS distance in current spanner
+    function bfsDistance(src, dst) {
+        if (src === dst) return 0;
+        const visited = new Set([src]);
+        const queue = [{node: src, dist: 0}];
+        let head = 0;
+        while (head < queue.length) {
+            const {node, dist} = queue[head++];
+            for (const {node: nbr} of spannerAdj[node]) {
+                if (nbr === dst) return dist + 1;
+                if (!visited.has(nbr)) {
+                    visited.add(nbr);
+                    queue.push({node: nbr, dist: dist + 1});
+                }
+            }
+        }
+        return Infinity;
+    }
+    
+    for (const e of sortedEdges) {
+        const u = typeof e.source === 'object' ? e.source.id : e.source;
+        const v = typeof e.target === 'object' ? e.target.id : e.target;
+        const w = e.weight || 1;
+        
+        if (bfsDistance(u, v) > t * w) {
+            spannerAdj[u].push({node: v});
+            spannerAdj[v].push({node: u});
+            const key = Math.min(u, v) + ',' + Math.max(u, v);
+            spannerEdges.add(key);
+            spannerEdgeList.push({source: u, target: v, weight: w});
+        }
+    }
+    
+    const time = performance.now() - start;
+    return {
+        spannerEdges: spannerEdgeList,
+        spannerEdgeSet: spannerEdges,
+        clusterAssignments: {},
+        phaseLogs: [{phase: 'greedy', edgesAdded: spannerEdgeList.length}],
+        phaseEdges: [spannerEdgeList],
+        constructionTime: time,
+        sparseness: spannerEdgeList.length / Math.max(graph.edges.length, 1),
+    };
+}
+
+// ─── Hybrid Adaptive Spanner (HAS) ───────────────────────────
+
+function hybridAdaptiveSpanner(graph, k, seed) {
+    const rng = mulberry32(seed);
+    const start = performance.now();
+    const n = graph.nodes.length;
+    const t = 2 * k - 1;
+
+    // Build adjacency
+    const adj = {};
+    for (const node of graph.nodes) adj[node.id] = [];
+    for (const e of graph.edges) {
+        const u = typeof e.source === 'object' ? e.source.id : e.source;
+        const v = typeof e.target === 'object' ? e.target.id : e.target;
+        adj[u].push({node: v, weight: e.weight || 1});
+        adj[v].push({node: u, weight: e.weight || 1});
+    }
+
+    // Compute degrees & topology detection
+    const degrees = {};
+    let maxDeg = 0;
+    for (const node of graph.nodes) {
+        degrees[node.id] = adj[node.id].length;
+        if (degrees[node.id] > maxDeg) maxDeg = degrees[node.id];
+    }
+    const avgDeg = graph.edges.length * 2 / Math.max(n, 1);
+    const degValues = Object.values(degrees);
+    const stdDeg = Math.sqrt(degValues.reduce((s, d) => s + (d - avgDeg) ** 2, 0) / Math.max(degValues.length, 1));
+    const cv = stdDeg / Math.max(avgDeg, 1);
+    const topology = cv > 1.0 ? 'scale-free' : cv < 0.3 ? 'grid-like' : 'random';
+    const samplingBoost = topology === 'scale-free' ? 1.5 : topology === 'grid-like' ? 0.9 : 1.0;
+
+    const baseP = n > 1 ? Math.pow(n, -1.0 / k) : 1.0;
+    const p = Math.min(baseP * samplingBoost, 0.95);
+
+    // Phase 0: every vertex is its own cluster
+    let cluster = {};
+    for (const node of graph.nodes) cluster[node.id] = node.id;
+
+    const spannerEdges = new Set();
+    const spannerEdgeList = [];
+    const phaseLogs = [];
+    const phaseEdges = [];
+
+    function addEdge(u, v) {
+        const key = Math.min(u, v) + ',' + Math.max(u, v);
+        if (!spannerEdges.has(key)) {
+            spannerEdges.add(key);
+            spannerEdgeList.push({source: u, target: v, weight: 1});
+            return true;
+        }
+        return false;
+    }
+
+    // Phases 1 to k-1 with DEGREE-WEIGHTED SAMPLING
+    for (let phase = 1; phase < k; phase++) {
+        let edgesAdded = 0, clustersSurviving = 0, verticesUnclustered = 0;
+        const phaseNewEdges = [];
+
+        const currentCenters = new Set(Object.values(cluster).filter(c => c !== null));
+        const sampled = new Set();
+        for (const c of currentCenters) {
+            // Degree-weighted: high-degree nodes more likely to be sampled
+            const degreeFactor = (degrees[c] || 1) / Math.max(maxDeg, 1);
+            const adjustedP = Math.min(p * (0.5 + degreeFactor), 0.95);
+            if (rng() < adjustedP) {
+                sampled.add(c);
+                clustersSurviving++;
+            }
+        }
+
+        const newCluster = {};
+        for (const node of graph.nodes) {
+            const v = node.id;
+            if (cluster[v] === null) { newCluster[v] = null; continue; }
+
+            const lightestToCluster = {};
+            for (const {node: u, weight: w} of adj[v]) {
+                const uc = cluster[u];
+                if (uc === null) continue;
+                if (!(uc in lightestToCluster) || w < lightestToCluster[uc].w) {
+                    lightestToCluster[uc] = {u, w};
+                }
+            }
+
+            if (sampled.has(cluster[v])) {
+                newCluster[v] = cluster[v];
+                for (const [nc, {u}] of Object.entries(lightestToCluster)) {
+                    if (parseInt(nc) !== cluster[v] && !sampled.has(parseInt(nc))) {
+                        if (addEdge(v, u)) { edgesAdded++; phaseNewEdges.push({source: v, target: u}); }
+                    }
+                }
+            } else {
+                let bestU = null, bestW = Infinity, bestC = null;
+                for (const [nc, {u, w}] of Object.entries(lightestToCluster)) {
+                    if (sampled.has(parseInt(nc)) && w < bestW) { bestU = u; bestW = w; bestC = parseInt(nc); }
+                }
+                if (bestU !== null) {
+                    newCluster[v] = bestC;
+                    if (addEdge(v, bestU)) { edgesAdded++; phaseNewEdges.push({source: v, target: bestU}); }
+                    for (const [nc, {u}] of Object.entries(lightestToCluster)) {
+                        if (parseInt(nc) !== bestC && !sampled.has(parseInt(nc))) {
+                            if (addEdge(v, u)) { edgesAdded++; phaseNewEdges.push({source: v, target: u}); }
+                        }
+                    }
+                } else {
+                    newCluster[v] = null;
+                    verticesUnclustered++;
+                    for (const [nc, {u}] of Object.entries(lightestToCluster)) {
+                        if (addEdge(v, u)) { edgesAdded++; phaseNewEdges.push({source: v, target: u}); }
+                    }
+                }
+            }
+        }
+        cluster = newCluster;
+        phaseEdges.push(phaseNewEdges);
+        phaseLogs.push({phase, edgesAdded, clustersSurviving, verticesUnclustered, sampling: 'degree-weighted'});
+    }
+
+    // Final: unclustered add all edges
+    const finalEdges = [];
+    for (const node of graph.nodes) {
+        if (cluster[node.id] === null) {
+            for (const {node: u} of adj[node.id]) {
+                if (addEdge(node.id, u)) finalEdges.push({source: node.id, target: u});
+            }
+        }
+    }
+    phaseEdges.push(finalEdges);
+    phaseLogs.push({phase: 'final', edgesAdded: finalEdges.length});
+
+    const edgesBeforePruning = spannerEdges.size;
+
+    // GREEDY PRUNING PASS — remove redundant edges
+    let edgesPruned = 0;
+    const edgesToCheck = [...spannerEdges].slice(0, Math.max(1, Math.floor(spannerEdges.size * 0.3)));
+
+    // Build spanner adjacency for BFS
+    const spanAdj = {};
+    for (const node of graph.nodes) spanAdj[node.id] = [];
+    for (const key of spannerEdges) {
+        const [u, v] = key.split(',').map(Number);
+        spanAdj[u].push(v); spanAdj[v].push(u);
+    }
+
+    function bfsDist(src, dst, skipKey) {
+        if (src === dst) return 0;
+        const visited = new Set([src]);
+        const queue = [{n: src, d: 0}];
+        let h = 0;
+        while (h < queue.length) {
+            const {n: cur, d} = queue[h++];
+            for (const nb of spanAdj[cur]) {
+                const ek = Math.min(cur, nb) + ',' + Math.max(cur, nb);
+                if (ek === skipKey) continue;
+                if (!spannerEdges.has(ek)) continue;
+                if (nb === dst) return d + 1;
+                if (!visited.has(nb)) { visited.add(nb); queue.push({n: nb, d: d + 1}); }
+            }
+        }
+        return Infinity;
+    }
+
+    // BFS on original for original distances
+    function bfsOrigDist(src, dst) {
+        if (src === dst) return 0;
+        const visited = new Set([src]);
+        const queue = [{n: src, d: 0}];
+        let h = 0;
+        while (h < queue.length) {
+            const {n: cur, d} = queue[h++];
+            for (const {node: nb} of adj[cur]) {
+                if (nb === dst) return d + 1;
+                if (!visited.has(nb)) { visited.add(nb); queue.push({n: nb, d: d + 1}); }
+            }
+        }
+        return Infinity;
+    }
+
+    const removedEdges = [];
+    for (const key of edgesToCheck) {
+        const [u, v] = key.split(',').map(Number);
+        const dOrig = bfsOrigDist(u, v);
+        if (dOrig <= 0 || dOrig === Infinity) continue;
+        const dWithout = bfsDist(u, v, key);
+        // Strict less-than to be conservative (avoid cascading violations)
+        if (dWithout < t * dOrig) {
+            spannerEdges.delete(key);
+            const idx = spannerEdgeList.findIndex(e => {
+                const eu = typeof e.source === 'object' ? e.source.id : e.source;
+                const ev = typeof e.target === 'object' ? e.target.id : e.target;
+                return Math.min(eu, ev) + ',' + Math.max(eu, ev) === key;
+            });
+            if (idx >= 0) spannerEdgeList.splice(idx, 1);
+            removedEdges.push({key, u, v});
+            edgesPruned++;
+        }
+    }
+    // Verification pass: re-add any edge whose removal caused cascading violations
+    for (const {key, u, v} of removedEdges) {
+        // Check if current spanner still maintains stretch for this pair
+        const dOrig = bfsOrigDist(u, v);
+        // Build temporary full BFS (no skip)
+        const dSpanner = bfsDist(u, v, '');
+        if (dSpanner > t * dOrig) {
+            // Re-add this edge
+            spannerEdges.add(key);
+            spannerEdgeList.push({source: u, target: v, weight: 1});
+            edgesPruned--;
+        }
+    }
+
+    phaseEdges.push([]);
+    phaseLogs.push({phase: 'pruning', edgesAdded: -edgesPruned, edgesPruned, edgesBeforePruning, topology});
+
+    const time = performance.now() - start;
+    return {
+        spannerEdges: spannerEdgeList,
+        spannerEdgeSet: spannerEdges,
+        clusterAssignments: cluster,
+        phaseLogs,
+        phaseEdges,
+        constructionTime: time,
+        sparseness: spannerEdgeList.length / Math.max(graph.edges.length, 1),
+    };
+}
+
+// ─── Visualization ───────────────────────────────────────────
+
+function renderGraph() {
+    const container = document.getElementById('graph-container');
+    const svg = d3.select('#graph-svg');
+    svg.selectAll('*').remove();
+    
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    svg.attr('viewBox', `0 0 ${width} ${height}`);
+    
+    const g = svg.append('g');
+    
+    // Zoom
+    const zoom = d3.zoom()
+        .scaleExtent([0.2, 5])
+        .on('zoom', (event) => g.attr('transform', event.transform));
+    svg.call(zoom);
+    
+    // Determine which edges are in spanner
+    const spannerSet = spannerResult ? spannerResult.spannerEdgeSet : new Set();
+    const clusters = spannerResult ? spannerResult.clusterAssignments : {};
+    
+    // Color scale for clusters
+    const clusterIds = [...new Set(Object.values(clusters).filter(c => c !== null))];
+    const colorScale = d3.scaleOrdinal(d3.schemeSet3).domain(clusterIds);
+    
+    // Deep-copy ALL edges — forceLink WILL mutate these (resolving source/target
+    // from integers to node objects), which is exactly what the tick handler needs
+    const allEdgeCopies = graph.edges.map(e => ({
+        source: typeof e.source === 'object' ? e.source.id : e.source,
+        target: typeof e.target === 'object' ? e.target.id : e.target,
+        weight: e.weight || 1
+    }));
+    
+    const hasSpanner = spannerSet.size > 0;
+    const edgeGroup = g.append('g');
+    
+    if (hasSpanner) {
+        // Classify copies BEFORE forceLink mutates them
+        const nonSpannerCopies = allEdgeCopies.filter(e => {
+            const key = Math.min(e.source, e.target) + ',' + Math.max(e.source, e.target);
+            return !spannerSet.has(key);
+        });
+        const spannerCopies = allEdgeCopies.filter(e => {
+            const key = Math.min(e.source, e.target) + ',' + Math.max(e.source, e.target);
+            return spannerSet.has(key);
+        });
+        
+        edgeGroup.selectAll('.edge-removed')
+            .data(nonSpannerCopies).enter().append('line')
+            .attr('class', 'edge-removed')
+            .attr('stroke', '#4a4a6a').attr('stroke-width', 0.8)
+            .attr('stroke-dasharray', '4,4').attr('opacity', 0.5);
+        
+        edgeGroup.selectAll('.edge-spanner')
+            .data(spannerCopies).enter().append('line')
+            .attr('class', 'edge-spanner')
+            .attr('stroke', '#667eea').attr('stroke-width', 2)
+            .attr('opacity', 0.8).attr('stroke-linecap', 'round');
+    } else {
+        // No spanner — show ALL edges as visible original edges
+        edgeGroup.selectAll('.edge-original')
+            .data(allEdgeCopies).enter().append('line')
+            .attr('class', 'edge-original')
+            .attr('stroke', '#5a6acf').attr('stroke-width', 1.2).attr('opacity', 0.5);
+    }
+    
+    // Nodes
+    const nodeGroup = g.append('g');
+    const nodeElements = nodeGroup.selectAll('circle')
+        .data(graph.nodes).enter().append('circle')
+        .attr('r', graph.nodes.length > 150 ? 4 : graph.nodes.length > 80 ? 5 : 7)
+        .attr('fill', d => {
+            const c = clusters[d.id];
+            if (c === null || c === undefined) return '#f87171';
+            return colorScale(c);
+        })
+        .attr('stroke', '#fff').attr('stroke-width', 0.5).attr('cursor', 'pointer')
+        .on('mouseover', function(event, d) {
+            d3.select(this).attr('r', graph.nodes.length > 150 ? 6 : 9);
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = `<strong>Node ${d.id}</strong><br>` +
+                `Cluster: ${clusters[d.id] !== undefined ? clusters[d.id] : 'N/A'}<br>` +
+                `Degree: ${graph.edges.filter(e => {
+                    const u = typeof e.source === 'object' ? e.source.id : e.source;
+                    const v = typeof e.target === 'object' ? e.target.id : e.target;
+                    return u === d.id || v === d.id;
+                }).length}`;
+            tooltip.style.left = (event.pageX + 12) + 'px';
+            tooltip.style.top = (event.pageY - 10) + 'px';
+            tooltip.classList.add('visible');
+        })
+        .on('mouseout', function() {
+            d3.select(this).attr('r', graph.nodes.length > 150 ? 4 : graph.nodes.length > 80 ? 5 : 7);
+            document.getElementById('tooltip').classList.remove('visible');
+        })
+        .call(d3.drag()
+            .on('start', (event, d) => {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x; d.fy = d.y;
+            })
+            .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
+            .on('end', (event, d) => {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null; d.fy = null;
+            })
+        );
+    
+    // Force simulation — allEdgeCopies are used as BOTH line data and forceLink data.
+    // forceLink resolves source/target integers to node objects, so tick can read .x/.y
+    simulation = d3.forceSimulation(graph.nodes)
+        .force('link', d3.forceLink(allEdgeCopies).id(d => d.id).distance(30))
+        .force('charge', d3.forceManyBody().strength(-80))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('collision', d3.forceCollide(8))
+        .on('tick', () => {
+            edgeGroup.selectAll('line')
+                .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+                .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+            nodeElements
+                .attr('cx', d => d.x).attr('cy', d => d.y);
+        });
+}
+
+// ─── Phase Replay ────────────────────────────────────────────
+
+async function replayPhases() {
+    if (!spannerResult || !spannerResult.phaseEdges) return;
+    
+    const btn = document.getElementById('btn-phase-play');
+    btn.disabled = true;
+    btn.textContent = '⏸ Playing...';
+    
+    // Clear all spanner edges first
+    d3.selectAll('.edge-spanner').attr('opacity', 0).attr('stroke-width', 0);
+    
+    for (let p = 0; p < spannerResult.phaseEdges.length; p++) {
+        const phaseEdgesData = spannerResult.phaseEdges[p];
+        const log = spannerResult.phaseLogs[p];
+        
+        document.getElementById('phase-info').textContent = 
+            `Phase ${log.phase}: Adding ${phaseEdgesData.length} edges...`;
+        
+        // Gradually reveal edges for this phase
+        const edgeSet = new Set(phaseEdgesData.map(e => {
+            const u = typeof e.source === 'object' ? e.source.id : e.source;
+            const v = typeof e.target === 'object' ? e.target.id : e.target;
+            return Math.min(u, v) + ',' + Math.max(u, v);
+        }));
+        
+        d3.selectAll('.edge-spanner')
+            .filter(d => {
+                const u = typeof d.source === 'object' ? d.source.id : d.source;
+                const v = typeof d.target === 'object' ? d.target.id : d.target;
+                return edgeSet.has(Math.min(u, v) + ',' + Math.max(u, v));
+            })
+            .transition()
+            .duration(300)
+            .attr('opacity', 0.8)
+            .attr('stroke-width', 2.5)
+            .attr('stroke', p === spannerResult.phaseEdges.length - 1 ? '#f87171' : '#667eea');
+        
+        await new Promise(r => setTimeout(r, 600));
+    }
+    
+    // Restore all to normal
+    d3.selectAll('.edge-spanner')
+        .transition().duration(300)
+        .attr('stroke', '#667eea').attr('stroke-width', 2);
+    
+    document.getElementById('phase-info').textContent = 'Replay complete!';
+    btn.disabled = false;
+    btn.textContent = '▶ Play';
+}
+
+// ─── Event Handlers ──────────────────────────────────────────
+
+function loadGraphPreset() {
+    const preset = document.getElementById('graph-preset').value;
+    const seed = parseInt(document.getElementById('seed').value);
+    
+    document.getElementById('upload-section').style.display = 
+        preset === 'custom' ? 'block' : 'none';
+    
+    if (preset === 'custom') return;
+    
+    if (preset.startsWith('random-')) {
+        const n = parseInt(preset.split('-')[1]);
+        const p = n <= 50 ? 0.12 : n <= 100 ? 0.08 : 0.04;
+        graph = generateRandomGraph(n, p, seed);
+    } else if (preset.startsWith('grid-')) {
+        const side = parseInt(preset.split('-')[1]);
+        graph = generateGridGraph(side);
+    } else if (preset.startsWith('scalefree-')) {
+        const n = parseInt(preset.split('-')[1]);
+        graph = generateScaleFreeGraph(n, 3, seed);
+    }
+    
+    spannerResult = null;
+    updateMetrics();
+    renderGraph();
+}
+
+function buildSpanner() {
+    try {
+        const t = parseInt(document.getElementById('t-slider').value);
+        const k = Math.ceil((t + 1) / 2);
+        const seed = parseInt(document.getElementById('seed').value);
+        const algo = document.getElementById('algorithm').value;
+        
+        // Normalize edges — D3 forceLink mutates source/target from int to object
+        graph.edges = graph.edges.map(e => ({
+            source: typeof e.source === 'object' ? e.source.id : e.source,
+            target: typeof e.target === 'object' ? e.target.id : e.target,
+            weight: e.weight || 1
+        }));
+        
+        if (algo === 'baswana-sen') {
+            spannerResult = baswaanaSen(graph, k, seed);
+        } else if (algo === 'hybrid') {
+            spannerResult = hybridAdaptiveSpanner(graph, k, seed);
+        } else {
+            spannerResult = greedySpanner(graph, t);
+        }
+        
+        renderGraph();
+        updatePhaseLogs();
+        document.getElementById('btn-replay').disabled = false;
+        document.getElementById('btn-phase-play').disabled = false;
+        updateMetrics();
+    } catch(e) {
+        console.error('buildSpanner error:', e);
+        // Fallback: at least show the graph without spanner
+        spannerResult = null;
+        renderGraph();
+        updateMetrics();
+    }
+}
+
+function validateStretch() {
+    // Quick BFS-based stretch validation on 50 sampled pairs
+    if (!spannerResult || graph.nodes.length < 2) return {valid: true, maxStretch: 0};
+    const t = parseInt(document.getElementById('t-slider').value);
+    const n = graph.nodes.length;
+    const adj_orig = {}, adj_span = {};
+    for (const nd of graph.nodes) { adj_orig[nd.id] = []; adj_span[nd.id] = []; }
+    for (const e of graph.edges) {
+        const u = typeof e.source === 'object' ? e.source.id : e.source;
+        const v = typeof e.target === 'object' ? e.target.id : e.target;
+        adj_orig[u].push(v); adj_orig[v].push(u);
+    }
+    for (const e of spannerResult.spannerEdges) {
+        const u = typeof e.source === 'object' ? e.source.id : e.source;
+        const v = typeof e.target === 'object' ? e.target.id : e.target;
+        adj_span[u].push(v); adj_span[v].push(u);
+    }
+    function bfs(adjList, src, dst) {
+        if (src === dst) return 0;
+        const visited = new Set([src]);
+        const queue = [{n: src, d: 0}];
+        let h = 0;
+        while (h < queue.length) {
+            const {n: cur, d} = queue[h++];
+            for (const nb of (adjList[cur] || [])) {
+                if (nb === dst) return d + 1;
+                if (!visited.has(nb)) { visited.add(nb); queue.push({n: nb, d: d + 1}); }
+            }
+        }
+        return Infinity;
+    }
+    let maxStretch = 0, violations = 0;
+    const rng = mulberry32(42);
+    const numPairs = Math.min(50, n * (n - 1) / 2);
+    for (let i = 0; i < numPairs; i++) {
+        const u = graph.nodes[Math.floor(rng() * n)].id;
+        const v = graph.nodes[Math.floor(rng() * n)].id;
+        if (u === v) continue;
+        const dO = bfs(adj_orig, u, v);
+        if (dO === 0 || dO === Infinity) continue;
+        const dS = bfs(adj_span, u, v);
+        if (dS === Infinity) { violations++; continue; }
+        const s = dS / dO;
+        if (s > maxStretch) maxStretch = s;
+        if (s > t + 0.01) violations++;
+    }
+    return {valid: violations === 0, maxStretch: maxStretch.toFixed(2), violations};
+}
+
+function updateMetrics() {
+    document.getElementById('m-nodes').textContent = graph.nodes.length;
+    document.getElementById('m-orig-edges').textContent = graph.edges.length;
+    
+    if (spannerResult) {
+        document.getElementById('m-spanner-edges').textContent = spannerResult.spannerEdges.length;
+        document.getElementById('m-ratio').textContent = spannerResult.sparseness.toFixed(3);
+        document.getElementById('m-time').textContent = spannerResult.constructionTime.toFixed(1);
+        const sv = validateStretch();
+        if (sv.valid) {
+            document.getElementById('m-stretch').innerHTML =
+                `<span class="status-badge status-valid">Valid (${sv.maxStretch})</span>`;
+        } else {
+            document.getElementById('m-stretch').innerHTML =
+                `<span class="status-badge status-warning">${sv.violations} violations</span>`;
+        }
+    } else {
+        document.getElementById('m-spanner-edges').textContent = '-';
+        document.getElementById('m-ratio').textContent = '-';
+        document.getElementById('m-time').textContent = '-';
+        document.getElementById('m-stretch').textContent = '-';
+    }
+}
+
+function updatePhaseLogs() {
+    if (!spannerResult) return;
+    const container = document.getElementById('phase-logs');
+    container.innerHTML = spannerResult.phaseLogs.map(log => {
+        if (log.phase === 'pruning') {
+            return `<div style="margin-bottom:6px"><b>Pruning</b>: −${log.edgesPruned} edges removed (${log.edgesBeforePruning}→${log.edgesBeforePruning - log.edgesPruned}), topology: <em>${log.topology}</em></div>`;
+        }
+        if (log.phase === 'final' || log.phase === 'greedy') {
+            return `<div style="margin-bottom:6px"><b>${log.phase === 'final' ? 'Final' : 'Greedy'}</b>: +${log.edgesAdded} edges</div>`;
+        }
+        const samplingNote = log.sampling ? ` <span style="color:#a78bfa">[${log.sampling}]</span>` : '';
+        return `<div style="margin-bottom:6px"><b>Phase ${log.phase}</b>: +${log.edgesAdded} edges, ${log.clustersSurviving} clusters, ${log.verticesUnclustered} unclustered${samplingNote}</div>`;
+    }).join('');
+}
+
+function resetView() {
+    spannerResult = null;
+    // Normalize edges back to integers
+    graph.edges = graph.edges.map(e => ({
+        source: typeof e.source === 'object' ? e.source.id : e.source,
+        target: typeof e.target === 'object' ? e.target.id : e.target,
+        weight: e.weight || 1
+    }));
+    document.getElementById('btn-replay').disabled = true;
+    document.getElementById('btn-phase-play').disabled = true;
+    updateMetrics();
+    renderGraph();
+    document.getElementById('phase-logs').innerHTML = '<em>Build a spanner to see phase logs</em>';
+    document.getElementById('phase-info').textContent = 'Select a graph and build a spanner to begin';
+}
+
+// ─── Utility ─────────────────────────────────────────────────
+
+function mulberry32(a) {
+    return function() {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        var t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+}
+
+// ─── Init ────────────────────────────────────────────────────
+
+document.getElementById('graph-preset').addEventListener('change', loadGraphPreset);
+document.getElementById('t-slider').addEventListener('input', function() {
+    document.getElementById('t-display').textContent = `t = ${this.value}`;
+});
+document.getElementById('t-slider').addEventListener('change', function() {
+    if (spannerResult) buildSpanner();
+});
+
+document.getElementById('file-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        const text = ev.target.result;
+        const lines = text.trim().split('\n');
+        const nodeSet = new Set();
+        const edges = [];
+        for (const line of lines) {
+            const l = line.trim();
+            if (!l || l.startsWith('#')) continue;
+            const parts = l.split(/[\s,]+/);
+            if (parts.length >= 2) {
+                const u = parseInt(parts[0]), v = parseInt(parts[1]);
+                if (!isNaN(u) && !isNaN(v) && u !== v) {
+                    nodeSet.add(u); nodeSet.add(v);
+                    edges.push({source: u, target: v, weight: 1});
+                }
+            }
+        }
+        graph = {
+            nodes: [...nodeSet].sort((a,b) => a-b).map(id => ({id})),
+            edges
+        };
+        spannerResult = null;
+        updateMetrics();
+        renderGraph();
+    };
+    reader.readAsText(file);
+});
+
+// Initial load — auto-build spanner so users see the algorithm immediately
+loadGraphPreset();
+</script>
+
+</body>
+</html>
+    

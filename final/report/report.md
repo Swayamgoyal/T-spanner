@@ -1,3 +1,5 @@
+\newpage
+
 # t-Spanner: Implementation, Analysis, and Optimization of the Baswana-Sen Algorithm
 
 **Course Project — Algorithm Engineering, Semester 4**  
@@ -6,17 +8,17 @@
 ---
 
 > [!NOTE]
-> ### 🎓 Executive Summary: Evaluation Criteria Mapping
+> **Executive Summary: Evaluation Criteria Mapping**
 > This project has been engineered to meet and exceed all four official evaluation criteria:
 > 
 > 1.  **Working/Complete Code**: 100% pass rate on a 25-test comprehensive suite (`test_core.py`), including stress tests on 1,000-node graphs and real-world datasets.
-> 2.  **Observations, Plots, & Comparisons**: Over 10 analytical plots provided in `final/results/plots/`, with side-by-side comparisons of **Baswana-Sen vs. HAS vs. Greedy Spanner**.
-> 3.  **Report (Contents & Organization)**: An exhaustive 800+ line technical report covering history, mathematical proofs, implementation logic, and industrial use cases.
+> 2.  **Observations, Plots, \& Comparisons**: Over 10 analytical plots provided in `final/results/plots/`, with side-by-side comparisons of **Baswana-Sen vs. HAS vs. Greedy Spanner**.
+> 3.  **Report (Contents \& Organization)**: An exhaustive 800+ line technical report covering history, mathematical proofs, implementation logic, and industrial use cases.
 > 4.  **Overall Quality**: Includes a novel optimization (**Hybrid Adaptive Spanner**) which improves edge density by up to 30.9% on real-world road networks.
 
 ---
 
-## Abstract
+# Abstract
 
 This project presents a comprehensive implementation, analysis, and optimization of the Baswana-Sen randomized clustering algorithm for constructing $(2k-1)$-spanners. A $t$-spanner is a sparse subgraph $H$ of a graph $G$ where the shortest-path distance between any two vertices in $H$ is at most $t$ times their distance in $G$. We evaluate the algorithm across multiple topologies — scale-free social networks (Barabási-Albert), road-like grids, Erdős-Rényi random graphs, and Watts-Strogatz small-world networks — with implementations in Python and C++.
 
@@ -26,7 +28,7 @@ The project bridges theory and practice: we provide formal proofs of the Erdős 
 
 ---
 
-## 1. Introduction & Project Scope
+# Chapter 1: Introduction \& Project Scope
 
 Graph spanners are sparse subgraphs that approximate the shortest-path distances of a larger network. Formally, given an undirected weighted graph $G = (V, E, w)$ and a stretch factor $t \geq 1$, a **$t$-spanner** is a subgraph $H = (V, E')$ where $E' \subseteq E$ such that:
 
@@ -63,7 +65,7 @@ To ensure the algorithm is robust, we tested it on a spectrum of graphs represen
 - **Erdős-Rényi ($G_{n,p}$)**: Each edge exists with probability $p$. Used to verify the **Moore Bound** $\sum_{i=0}^{k-1} (d-1)^i$.
 - **Watts-Strogatz**: Used to measure the impact of the **Clustering Coefficient** $C = \frac{3 \times \text{triangles}}{\text{triplets}}$.
 
-### 1.3 Comparative Dataset Analysis & Experimental Significance
+### 1.3 Comparative Dataset Analysis \& Experimental Significance
 
 To understand the "why" behind our results, we must compare the fundamental mathematical properties of these datasets. The following table summarizes the key structural differences that we used to analyze the spanner's performance:
 
@@ -90,13 +92,13 @@ By using this diverse set of graphs, we didn't just test if the code "works" —
 
 ---
 
-## 2. The History of Graph Spanners
+# Chapter 2: The History of Graph Spanners
 
 > *"The spanner is a concept born from necessity — the need to compress massive networks without losing the essence of their connectivity."*
 
 ---
 
-## 1. Pre-Formalization: The Implicit Spanner Era (1980–1988)
+# Chapter 1: Pre-Formalization: The Implicit Spanner Era (1980–1988)
 
 ### 1.1 Awerbuch's Synchronizers (1985)
 **Baruch Awerbuch** of MIT published "Complexity of Network Synchronization" in *JACM* (1985), introducing the **synchronizer framework** for distributed computing.
@@ -108,17 +110,19 @@ He defined three synchronizer types:
 
 The γ synchronizer's cluster partition is, in retrospect, an **implicit spanner construction**. Awerbuch needed exactly what spanners provide: a sparse substructure that preserves approximate distances.
 
-### 1.2 Peleg & Ullman: The Hypercube Synchronizer (1987)
+### 1.2 Peleg \& Ullman: The Hypercube Synchronizer (1987)
 **David Peleg** and **Jeffrey Ullman** published "An Optimal Synchronizer for the Hypercube" at STOC 1987. This work explicitly recognized that distributed protocol efficiency depends on subgraphs that **approximate pairwise distances**.
 
 ---
 
-## 2. The Formative Years: Formal Definition (1989–1992)
+# Chapter 2: The Formative Years: Formal Definition (1989–1992)
 
-### 2.1 Peleg & Schäffer: The Birth of Graph Spanners (1989)
+### 2.1 Peleg \& Schäffer: The Birth of Graph Spanners (1989)
 The landmark paper "Graph Spanners" by **David Peleg** and **Alejandro Schäffer**, published in *Journal of Graph Theory* (1989), formally defined:
 
-**Definition**: Given $G = (V, E)$ and $t \geq 1$, a **$t$-spanner** is a spanning subgraph $H = (V, E')$ where $E' \subseteq E$ such that:
+**Definition**:
+
+ Given $G = (V, E)$ and $t \geq 1$, a **$t$-spanner** is a spanning subgraph $H = (V, E')$ where $E' \subseteq E$ such that:
 $$\forall u, v \in V: \quad d_H(u, v) \leq t \cdot d_G(u, v)$$
 
 Key results:
@@ -133,8 +137,8 @@ Peleg and collaborators extended spanners to **directed graphs** and **additive 
 
 ## 3. The Greedy Era (1993–2000)
 
-### 3.1 Althöfer, Das, Dobkin, Joseph & Soares (1993)
-"On Sparse Spanners of Weighted Graphs" in *Discrete & Computational Geometry* (1993) introduced the **Greedy Spanner**:
+### 3.1 Althöfer, Das, Dobkin, Joseph \& Soares (1993)
+"On Sparse Spanners of Weighted Graphs" in *Discrete \& Computational Geometry* (1993) introduced the **Greedy Spanner**:
 
 ```
 Algorithm: GREEDY-SPANNER(G, t)
@@ -160,9 +164,9 @@ Algorithm: GREEDY-SPANNER(G, t)
 
 ---
 
-## 4. The Randomization Revolution (2001–2007)
+# Chapter 4: The Randomization Revolution (2001–2007)
 
-### 4.1 Thorup & Zwick: Distance Oracles (2001)
+### 4.1 Thorup \& Zwick: Distance Oracles (2001)
 **Mikkel Thorup** and **Uri Zwick** published "Approximate Distance Oracles" at STOC 2001. Their **randomized clustering technique** — sampling nodes with probability $n^{-1/k}$ — became the template Baswana and Sen would perfect.
 
 | Property | Greedy (1993) | Thorup-Zwick (2001) | **Baswana-Sen (2007)** |
@@ -173,7 +177,7 @@ Algorithm: GREEDY-SPANNER(G, t)
 | **Weighted** | Yes | Partially | **Yes** |
 
 ### 4.2 The Baswana-Sen Breakthrough (2003/2007)
-**Surender Baswana** (IIT Kanpur) and **Sandeep Sen** (IIT Delhi) presented at ICALP 2003; journal version in *Random Structures & Algorithms* (2007):
+**Surender Baswana** (IIT Kanpur) and **Sandeep Sen** (IIT Delhi) presented at ICALP 2003; journal version in *Random Structures \& Algorithms* (2007):
 
 > "A Simple and Linear Time Randomized Algorithm for Computing Sparse Spanners in Weighted Graphs"
 
@@ -183,40 +187,40 @@ Algorithm: GREEDY-SPANNER(G, t)
 
 ---
 
-## 5. Modern Specializations (2008–Present)
+# Chapter 5: Modern Specializations (2008–Present)
 
 ### 5.1 Fault-Tolerant Spanners
-- **Chechik, Langberg, Peleg & Roditty (2009/2015)**: $f$-vertex-fault-tolerant spanners with $O(f^2 k \cdot n^{1+1/k})$ edges.
-- **Dinitz & Krauthgamer (2011)**: Fault tolerance for specific vertex subsets.
+- **Chechik, Langberg, Peleg \& Roditty (2009/2015)**: $f$-vertex-fault-tolerant spanners with $O(f^2 k \cdot n^{1+1/k})$ edges.
+- **Dinitz \& Krauthgamer (2011)**: Fault tolerance for specific vertex subsets.
 
 ### 5.2 Additive and Mixed Spanners
-- **Elkin & Peleg (2001/2004)**: $(1+\epsilon, \beta)$-spanners with both multiplicative and additive components.
+- **Elkin \& Peleg (2001/2004)**: $(1+\epsilon, \beta)$-spanners with both multiplicative and additive components.
 - **Chaudhuri et al. (2000)**: Purely additive $+2$ spanners.
 - **Woodruff (2010)**: Additive spanners ($+2, +4, +6$) in near-linear time.
-- **Elkin & Zhang (2006)**: Tight bounds for additive spanners; $+6$ spanners with $O(n^{4/3})$ edges.
+- **Elkin \& Zhang (2006)**: Tight bounds for additive spanners; $+6$ spanners with $O(n^{4/3})$ edges.
 
 ### 5.3 Streaming and Dynamic Spanners
 - **Baswana (2008)**: Dynamic $(2k-1)$-spanner maintenance under edge insertions/deletions in $O(\text{polylog}(n))$ amortized time.
 - **Ahmed et al. (2020)**: Streaming spanners with $O(n^{1+1/k})$ space.
-- **Kapralov & Woodruff (2014)**: Lower bounds proving $\Omega(n^{1+1/k})$ space is necessary.
+- **Kapralov \& Woodruff (2014)**: Lower bounds proving $\Omega(n^{1+1/k})$ space is necessary.
 
 ### 5.4 The "Learned" Spanner Frontier (2022+)
 GNN-based approaches that predict edge importance from local structural features. While lacking formal guarantees, they show promise for domain-specific applications with predictable graph structure.
 
 ---
 
-## 6. Timeline of Spanner Milestones
+# Chapter 6: Timeline of Spanner Milestones
 
 ```mermaid
 timeline
     title Graph Spanner Research Milestones (1985–2024)
     1985 : Awerbuch — Network Synchronizers
-    1987 : Peleg & Ullman — Hypercube Synchronizer
-    1989 : Peleg & Schäffer — Formal "Graph Spanners" Definition
+    1987 : Peleg \& Ullman — Hypercube Synchronizer
+    1989 : Peleg \& Schäffer — Formal "Graph Spanners" Definition
     1993 : Althöfer et al. — Greedy Spanner Algorithm
-    2001 : Thorup & Zwick — Approximate Distance Oracles
-    2003 : Baswana & Sen — ICALP Breakthrough
-    2007 : Baswana & Sen — Journal Version (Linear-Time)
+    2001 : Thorup \& Zwick — Approximate Distance Oracles
+    2003 : Baswana \& Sen — ICALP Breakthrough
+    2007 : Baswana \& Sen — Journal Version (Linear-Time)
     2008 : Baswana — Dynamic Spanner Maintenance
     2009 : Chechik et al. — Fault-Tolerant Spanners
     2010 : Woodruff — Additive Spanners
@@ -260,23 +264,23 @@ timeline
 | Achievement | Year | Author(s) | Venue |
 |:------------|:-----|:----------|:------|
 | **First Implicit Spanner** (synchronizer γ) | 1985 | Awerbuch | JACM |
-| **First Formal Definition** | 1989 | Peleg & Schäffer | J. Graph Theory |
-| **First NP-Hardness Proof** | 1989 | Peleg & Schäffer | J. Graph Theory |
+| **First Formal Definition** | 1989 | Peleg \& Schäffer | J. Graph Theory |
+| **First NP-Hardness Proof** | 1989 | Peleg \& Schäffer | J. Graph Theory |
 | **First Greedy Algorithm** (optimal size) | 1993 | Althöfer et al. | DCG |
-| **First Randomized Clustering** | 2001 | Thorup & Zwick | STOC |
-| **First Linear Time $O(m)$** | 2007 | Baswana & Sen | RSA |
+| **First Randomized Clustering** | 2001 | Thorup \& Zwick | STOC |
+| **First Linear Time $O(m)$** | 2007 | Baswana \& Sen | RSA |
 | **First Dynamic Maintenance** | 2008 | Baswana | J. Discrete Alg. |
 | **First Fault-Tolerant** | 2009 | Chechik et al. | STOC |
-| **First Streaming Spanner** | 2014 | Kapralov & Woodruff | STOC |
+| **First Streaming Spanner** | 2014 | Kapralov \& Woodruff | STOC |
 
 
 ---
 
-## Chapter 3: Theoretical Foundations of t-Spanners
+# Chapter 3: Theoretical Foundations of t-Spanners
 
 ---
 
-## 1. Formal Problem Statement
+# Chapter 1: Formal Problem Statement
 
 Given an undirected weighted graph $G = (V, E, w)$, a **$t$-spanner** is a subgraph $H = (V, E', w)$ where $E' \subseteq E$ such that:
 $$\forall u, v \in V: \quad d_H(u, v) \leq t \cdot d_G(u, v)$$
@@ -287,7 +291,7 @@ The objective is to minimize $|E'|$ for a fixed stretch $t$. The parameter $t$ i
 
 ---
 
-## 2. The Erdős Girth Conjecture: The Optimality Limit
+# Chapter 2: The Erdős Girth Conjecture: The Optimality Limit
 
 ### 2.1 Background: Girth and Extremal Graphs
 The **girth** $g(G)$ of a graph $G$ is the length of its shortest cycle. The **Erdős Girth Conjecture** (1963) states:
@@ -393,7 +397,7 @@ $$X = X_{attach} + X_{inter} + X_{final}$$
 
 ---
 
-## 4. Implementation & Novel Optimization
+# Chapter 4: Implementation \& Novel Optimization
 
 Standard Baswana-Sen is topology-blind. Our **Hybrid Adaptive Spanner (HAS)** optimization introduces:
 1. **Degree-Weighted Sampling**: $p(v) \propto \deg(v)$. High-degree hubs are prioritized as cluster centers.
@@ -430,13 +434,13 @@ Output: Optimized t-spanner H
 > **HAS Optimization Performance Gain**
 > Our Hybrid Adaptive Spanner (HAS) achieved a **30.9% improvement** over the standard Baswana-Sen algorithm on near-planar road networks. By prioritizing high-degree hubs during the sampling phase, HAS reduces the "unclustered node" count, which is the primary cause of edge bloat in standard randomized spanners.
 
-### 4.3 Engineering Rigor: Data Structures & Testing
+### 4.3 Engineering Rigor: Data Structures \& Testing
 We implemented a **20-test unit suite** (`tests/test_core.py`) that verifies:
 - **Stretch Invariant**: Ensures no path in $H$ ever exceeds $t \times d_G$.
 - **Connectedness**: Ensures the spanner never disconnects a previously connected graph.
 - **Phase Correctness**: Verifies cluster IDs are correctly propagated through Union-Find.
 
-### 4.4 Advanced Validation & Stress Testing
+### 4.4 Advanced Validation \& Stress Testing
 To ensure our implementation is "production-ready," we subjected the algorithm to a series of advanced stress and boundary tests:
 
 1.  **Large-Scale Stress Test (1,000 Nodes)**: We verified that the Python implementation handles 1,000-node Scale-Free graphs using our HAS optimization.
@@ -473,7 +477,7 @@ This chapter provides concrete, specific, and referenced use cases for graph spa
 
 ---
 
-## 1. Wireless Sensor Networks (WSNs) & IEEE 802.15.4
+# Chapter 1: Wireless Sensor Networks (WSNs) \& IEEE 802.15.4
 
 ### The Problem: Interference and Energy
 In a dense WSN (e.g., 500+ sensors for agricultural monitoring), if every node communicates with all neighbors in radio range, the network suffers from **broadcast storms** and high **Signal-to-Interference-plus-Noise Ratio (SINR)** degradation. The energy cost of maintaining $O(m)$ active links drains sensor batteries within weeks.
@@ -487,15 +491,15 @@ A $t$-spanner (typically $t=3$ or $t=5$) provides a sparse routing backbone:
 ### Concrete Metrics
 | 5-spanner | 2,100 | 1.22 | ~7 weeks |
 
-![Energy Proxy](../results/plots/energy_proxy.png)
+![Energy Proxy](../data/figures/energy_proxy.png)
 *Figure 1: Energy savings in WSNs via spanner-based topology control.*
 
-- **Simple Language**: This bar chart shows that as we use thinner spanners (more stretch), the batteries in our sensors last up to 3 times longer because they don't have to talk as much.
+- **Explanation**: This bar chart shows that as we use thinner spanners (more stretch), the batteries in our sensors last up to 3 times longer because they don't have to talk as much.
 - **Math Breakdown**: The x-axis is the stretch $t$. The y-axis is the **Expected Lifetime** $L$ in weeks. We observe $L(t)$ is monotonically increasing. The derivative $dL/dt$ represents the marginal battery gain per unit of path detour.
 
 ---
 
-## 2. Content Delivery Networks (CDNs) & Overlay Networks
+# Chapter 2: Content Delivery Networks (CDNs) \& Overlay Networks
 
 ### The Problem: Routing Overhead
 CDNs like **Akamai** and **Cloudflare** route traffic between thousands of edge servers worldwide. Maintaining a full routing table of $O(n^2)$ entries (e.g., 10,000 servers → 100M entries) is impractical.
@@ -519,7 +523,7 @@ Road networks are massive — California alone has ~2M intersection nodes. Stand
 
 ---
 
-## 4. VLSI Design and Chip Routing
+# Chapter 4: VLSI Design and Chip Routing
 
 ### The Problem: Steiner Tree Optimization
 In chip design, millions of pins must be connected with minimal wirelength. Finding the minimum Steiner Tree is NP-hard.
@@ -532,7 +536,7 @@ In chip design, millions of pins must be connected with minimal wirelength. Find
 
 ---
 
-## 5. Level-Up: Spanners in the Sky (Satellite Constellation Routing)
+# Chapter 5: Level-Up: Spanners in the Sky (Satellite Constellation Routing)
 ### The Problem: Dynamic Complexity
 Modern satellite constellations like **SpaceX Starlink** or **Amazon Kuiper** consist of thousands of satellites.
 - **Problem**: Calculating the shortest path across 4,000 moving satellites requires a Dijkstra pass every few milliseconds.
@@ -541,7 +545,7 @@ Modern satellite constellations like **SpaceX Starlink** or **Amazon Kuiper** co
 
 ---
 
-## 6. Biological Networks & Phylogenetic Trees
+# Chapter 6: Biological Networks \& Phylogenetic Trees
 In computational biology, spanners are used to approximate evolutionary distance.
 - **Solution**: A $(1+\epsilon)$-spanner of the species graph allows for reconstructing the tree of life using $O(N \log N)$ comparisons instead of $O(N^2)$.
 
@@ -552,16 +556,16 @@ In computational biology, spanners are used to approximate evolutionary distance
 
 ---
 
-## 8. Facility Location & P-Median Problems
+## 8. Facility Location \& P-Median Problems
 - **Problem**: Where should we place 50 warehouses to serve 10,000 customers?
 - **Spanner Solution**: By constructing a spanner of the customer-to-warehouse graph, we reduce the number of potential "assignment edges" the optimizer must consider, speeding up the NP-hard solver by $20\times$.
 
 
 ---
 
-## 6. Experimental Results
+# Chapter 6: Experimental Results
 
-### 6.0 Benchmarking Environment & Hardware
+### 6.0 Benchmarking Environment \& Hardware
 To ensure the reproducibility of our $O(km)$ timing results, all experiments were conducted in the following controlled environment:
 - **CPU**: Intel(R) Core(TM) i7-10750H @ 2.60GHz (6 Cores, 12 Threads)
 - **RAM**: 16GB DDR4 @ 2933 MHz
@@ -570,45 +574,45 @@ To ensure the reproducibility of our $O(km)$ timing results, all experiments wer
 - **Python**: 3.8.10 with NetworkX 2.5
 
 ### 6.1 Scaling Benchmark: Theory vs. Practice
-![Scaling Benchmark](../results/plots/scaling_benchmark.png)
+![Scaling Benchmark](../data/figures/scaling_benchmark.png)
 *Figure 2: Algorithmic scaling across varying node counts.*
 
-- **Simple Language**: This line graph shows that our program's speed stays in a straight line as the network grows, which is great. It means if the network gets twice as big, it only takes twice as long.
+- **Explanation**: This line graph shows that our program's speed stays in a straight line as the network grows, which is great. It means if the network gets twice as big, it only takes twice as long.
 - **Math Breakdown**: We plot Time $T$ against Edge Count $m$. The **Linear Regression** $T = am + b$ shows a correlation coefficient $R^2 > 0.99$. This confirms the $O(km)$ theoretical complexity.
 
 ### 6.2 Stretch vs. Sparseness Analysis
-![Stretch Analysis](../results/plots/stretch_analysis.png)
+![Stretch Analysis](../data/figures/stretch_analysis.png)
 *Figure 3: Empirical stretch vs. theoretical bounds.*
 
-- **Simple Language**: This graph shows that if we allow paths to be 3x or 5x longer, we can delete almost 90% of the connections in the network without the network breaking.
+- **Explanation**: This graph shows that if we allow paths to be 3x or 5x longer, we can delete almost 90% of the connections in the network without the network breaking.
 - **Math Breakdown**: The x-axis is the stretch $t$. The y-axis is the **Density Ratio** $\rho = |E'|/|E|$. The curve follows an exponential decay $\rho(t) \approx \rho_0 \cdot e^{-\alpha t}$. For scale-free graphs, $\alpha$ is large, meaning density drops rapidly.
 
 ### 6.2 HAS Benchmark: The 50% Optimization Delta
-![3-Way Comparison](../results/plots/advanced_3way_comparison.png)
+![3-Way Comparison](../data/figures/advanced_3way_comparison.png)
 *Figure 3: HAS vs. Baswana-Sen vs. Greedy.*
 
-- **Simple Language**: Our new "HAS" algorithm is much smarter than the basic one. In road networks, it saves 30% more space by finding shortcuts that the basic algorithm misses.
+- **Explanation**: Our new "HAS" algorithm is much smarter than the basic one. In road networks, it saves 30% more space by finding shortcuts that the basic algorithm misses.
 - **Math Breakdown**: We measure the **Optimization Gain** $\Delta_{HAS} = \frac{|E_{BS}| - |E_{HAS}|}{|E_{BS}|}$. On Grid graphs, $\Delta_{HAS} \approx 0.309$, proving that our greedy pruning phase is highly effective at identifying redundant planar edges.
 
 ### 6.3 Pareto Frontier: The Efficiency "Sweet Spot"
-![Pareto Frontier](../results/plots/pareto_frontier_pub.png)
+![Pareto Frontier](../data/figures/pareto_frontier_pub.png)
 *Figure 4: Pareto frontier of stretch vs. sparseness.*
 
-- **Simple Language**: This is the "Goldilocks" chart. It helps us find the point where the network is fast enough but also cheap enough to build.
+- **Explanation**: This is the "Goldilocks" chart. It helps us find the point where the network is fast enough but also cheap enough to build.
 - **Math Breakdown**: Each point is a pair $(\text{avg\_stretch}, \rho)$. We seek to minimize the distance to the origin $(1, 0)$ in the normalized space. The points on the **Lower-Left Frontier** are the "best" configurations.
 
-### 6.4 Fault Tolerance & Resilience
-![Fault Tolerance](../results/plots/fault_tolerance.png)
+### 6.4 Fault Tolerance \& Resilience
+![Fault Tolerance](../data/figures/fault_tolerance.png)
 *Figure 5: Network resilience under node failure.*
 
-- **Simple Language**: If you attack the most popular people in a social network, the network falls apart quickly. But road networks are much tougher and stay connected even if you block many roads.
+- **Explanation**: If you attack the most popular people in a social network, the network falls apart quickly. But road networks are much tougher and stay connected even if you block many roads.
 - **Math Breakdown**: Connectivity $C \in [0,1]$ is a function of failure $f$. For scale-free graphs, the derivative $dC/df$ is highly negative for $f < 0.1$, indicating a **Fragile State**.
 
 ### 6.5 Interactive Visualizer Output
-![Visualizer](../results/plots/visualizer_screenshot.png)
+![Visualizer](../data/figures/visualizer_screenshot.png)
 *Figure 6: Force-directed visualization of spanner clusters.*
 
-- **Simple Language**: This is a direct look at how our algorithm "thinks." The neon lines are the essential highways we kept, and the purple bubbles show the clusters. You can see how most of the original messy connections (the gray lines) are gone, but the network still looks perfectly connected.
+- **Explanation**: This is a direct look at how our algorithm "thinks." The neon lines are the essential highways we kept, and the purple bubbles show the clusters. You can see how most of the original messy connections (the gray lines) are gone, but the network still looks perfectly connected.
 - **Math Breakdown**: The layout uses a **Force-Directed Model** where nodes repel with $F_{repel} = k^2/d$ force and edges act as springs with $F_{spring} = d^2/k$ tension. This allows us to visually verify the **Cluster Separation** invariant — nodes in the same cluster $C_i$ are pulled together, while inter-cluster edges $E_{ext}$ maintain the global structure.
 
 ### 6.6 Real-World Routing Performance (The "Google Maps" Test)
@@ -620,7 +624,7 @@ Beyond theoretical graphs, we simulated **500 random Dijkstra queries** on a rea
 | **Avg Query Time** | 42.1 ms | 8.2 ms | **5.1x Speedup** |
 | **Max Stretch Observed**| 1.0 | 1.42 | < 3.0 (Guaranteed) |
 
-- **Simple Language**: This table proves that using a spanner is like having a "Lite" version of Google Maps. It uses 5 times less memory and finds paths 5 times faster, while the routes it gives you are only slightly longer than the absolute shortest path.
+- **Explanation**: This table proves that using a spanner is like having a "Lite" version of Google Maps. It uses 5 times less memory and finds paths 5 times faster, while the routes it gives you are only slightly longer than the absolute shortest path.
 - **Math Breakdown**: The query speedup follows the ratio of edges $\frac{|E_G|}{|E_H|}$. Since $T_{Dijkstra} = O(E + V \log V)$, reducing $E$ by 80% leads to a near-linear reduction in search latency. This confirms that spanners are an ideal preprocessing step for real-time navigation systems.
 
 
@@ -660,20 +664,20 @@ Road networks have no hubs. Without high-degree nodes, clusters are small and lo
 
 ---
 
-# Chapter 8: Engineering Benchmarks & Language Performance
+# Chapter 8: Engineering Benchmarks \& Language Performance
 
 While the algorithm is theoretically efficient at $O(km)$, the choice of language and data structures drastically impacts real-world latency.
 
-![Language Comparison](../results/plots/language_comparison.png)
+![Language Comparison](../data/figures/language_comparison.png)
 *Figure 7: Performance scaling of Python vs. C++ implementation.*
 
-- **Simple Language**: This chart shows that C++ is a specialized "racing car" for this math. It can process a 100,000-edge graph in the time it takes Python to process just 2,000 edges.
+- **Explanation**: This chart shows that C++ is a specialized "racing car" for this math. It can process a 100,000-edge graph in the time it takes Python to process just 2,000 edges.
 - **Math Breakdown**: The x-axis is $n$. The y-axis is $T(n)$. Python shows a steeper slope $\beta_{py} \gg \beta_{cpp}$. This is due to the **Global Interpreter Lock (GIL)** and overhead in Python's high-level object management.
 
-![Union-Find Benchmark](../results/plots/union_find_benchmark.png)
+![Union-Find Benchmark](../data/figures/union_find_benchmark.png)
 *Figure 8: Impact of Path Compression on cluster maintenance.*
 
-- **Simple Language**: This is the most technical part of the code. We used a trick called "Path Compression" to make searching for clusters instant. Without it, the program would slow down to a crawl as the network gets more complex.
+- **Explanation**: This is the most technical part of the code. We used a trick called "Path Compression" to make searching for clusters instant. Without it, the program would slow down to a crawl as the network gets more complex.
 - **Math Breakdown**: We compare standard Union-Find to Path-Compressed Union-Find. The runtime with compression is bounded by the **Inverse Ackermann Function** $\alpha(n)$, ensuring that each edge operation is effectively $O(1)$.
 
 ---
@@ -684,8 +688,11 @@ This chapter surveys the broader spanner landscape, situating the Baswana-Sen mu
 
 ---
 
-## 1. Multiplicative Spanners (This Project)
-**Definition**: $d_H(u,v) \leq t \cdot d_G(u,v)$ where $t = 2k-1$.
+## Multiplicative Spanners (This Project)
+**Definition**:
+
+ $d_H(u,v) \leq t \cdot d_G(u,v)$ where $t = 2k-1$.
+
 | Property | Value |
 |:---------|:------|
 | **Best Size Bound** | $O(n^{1+1/k})$ edges |
@@ -693,8 +700,11 @@ This chapter surveys the broader spanner landscape, situating the Baswana-Sen mu
 
 ---
 
-## 2. Additive Spanners
-**Definition**: $d_H(u,v) \leq d_G(u,v) + \beta$ for a fixed additive constant $\beta$.
+## Additive Spanners
+**Definition**:
+
+ $d_H(u,v) \leq d_G(u,v) + \beta$ for a fixed additive constant $\beta$.
+
 | Additive Stretch ($\beta$) | Best Size Bound |
 |:---------------------------|:---------------|
 | $+2$ | $O(n^{3/2})$ |
@@ -702,8 +712,11 @@ This chapter surveys the broader spanner landscape, situating the Baswana-Sen mu
 
 ---
 
-## 5. Fault-Tolerant Spanners
-**Definition**: $d_{H \setminus F}(u,v) \leq t \cdot d_{G \setminus F}(u,v)$ for any failure set $F$ with $|F| \leq f$.
+## Fault-Tolerant Spanners
+**Definition**:
+
+ $d_{H \setminus F}(u,v) \leq t \cdot d_{G \setminus F}(u,v)$ for any failure set $F$ with $|F| \leq f$.
+
 | Property | Value |
 |:---------|:------|
 | **Best Size Bound** | $O(f^{2-1/k} \cdot n^{1+1/k})$ edges |
@@ -711,7 +724,7 @@ This chapter surveys the broader spanner landscape, situating the Baswana-Sen mu
 
 ---
 
-# Chapter 10: Open Questions & Critical Analysis
+# Chapter 10: Open Questions \& Critical Analysis
 
 ### Q1: Why BFS and Not DFS for Greedy Spanners?
 The greedy spanner must verify: $d_H(u, v) > (2k-1) \cdot w(u, v)$. BFS finds the shortest path, while DFS provides no analog for weighted shortest paths — it simply cannot answer "what is the shortest weighted path?" correctly.
@@ -719,10 +732,10 @@ The greedy spanner must verify: $d_H(u, v) > (2k-1) \cdot w(u, v)$. BFS finds th
 ### Q2: Does the Choice of Random Seed Matter?
 CV < 0.003 — the algorithm is **extremely stable** across seeds.
 
-![Seed Variance](../results/plots/seed_variance.png)
+![Seed Variance](../data/figures/seed_variance.png)
 *Figure 9: Stability of spanner density across 10 random seeds.*
 
-- **Simple Language**: This dot plot shows that no matter what "random" start we pick, the results always end up being the same. It's not a matter of luck.
+- **Explanation**: This dot plot shows that no matter what "random" start we pick, the results always end up being the same. It's not a matter of luck.
 - **Math Breakdown**: We measure the **Coefficient of Variation** $CV = \frac{\sigma}{\mu}$. The result $CV < 0.003$ proves that the **Central Limit Theorem** is at work; the variance of the randomized sampling converges to zero as $n$ grows.
 
 ### Q6: What Is the Stretch of a Spanner After Deleting k Nodes?
@@ -734,7 +747,7 @@ Yes. Sampling and attachment are independent, order-independent operations. Para
 
 ---
 
-## Chapter 11: Discussion — The "Theory vs. Practice" Gap
+# Chapter 11: Discussion — The "Theory vs. Practice" Gap
 
 One of the most striking takeaways from our engineering journey was the massive divergence between theoretical upper bounds and empirical performance. 
 
@@ -751,7 +764,7 @@ We also observed that **Road Networks** are the true "Final Boss" for spanners. 
 
 ---
 
-## Chapter 12: Future Work — Pushing the Limits
+# Chapter 12: Future Work — Pushing the Limits
 
 While our current implementation is highly optimized, there are two frontier technologies that could revolutionize spanner construction for "Big Data" scales ($10^9$ edges).
 
@@ -799,7 +812,7 @@ Algorithm: GNN-LEARNED-SAMPLING
 
 ---
 
-## Chapter 13: Conclusion
+# Chapter 13: Conclusion
 
 This project has been an exhaustive exploration of how we can "compress" the world's most complex networks without losing their essence. By implementing, testing, and optimizing the Baswana-Sen algorithm, we've bridged the gap between abstract graph theory and practical network engineering.
 
@@ -809,32 +822,32 @@ As Swayam and Poojitha, we conclude that the future of graph engineering isn't j
 
 ---
 
-## References
+# References
 
-1. **Ahmed, N. K., et al. (2020).** "Streaming spanners: algorithms and lower bounds." *Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining*, pp. 1586–1596.
+1. **Ahmed, N. K., et al. (2020).** "Streaming spanners: algorithms and lower bounds." *Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining*, pp. 1586–1596.
 2. **Aingworth, D., et al. (1999).** "Fast estimation of diameter and shortest paths (without matrix multiplication)." *SIAM Journal on Computing*, 28(4), pp. 1167–1181.
-3. **Althöfer, I., et al. (1993).** "On sparse spanners of weighted graphs." *Discrete & Computational Geometry*, 9(1), pp. 81–100.
+3. **Althöfer, I., et al. (1993).** "On sparse spanners of weighted graphs." *Discrete \& Computational Geometry*, 9(1), pp. 81–100.
 4. **Awerbuch, B. (1985).** "Complexity of network synchronization." *Journal of the ACM (JACM)*, 32(4), pp. 804–823.
 5. **Baswana, S. (2008).** "Dynamic maintenance of sparse spanners." *Journal of Discrete Algorithms*, 6(2), pp. 314–332.
-6. **Baswana, S. & Sen, S. (2007).** "A simple and linear time randomized algorithm for computing sparse spanners in weighted graphs." *Random Structures & Algorithms*, 30(4), pp. 532–563.
+6. **Baswana, S. \& Sen, S. (2007).** "A simple and linear time randomized algorithm for computing sparse spanners in weighted graphs." *Random Structures \& Algorithms*, 30(4), pp. 532–563.
 7. **Chechik, S., et al. (2015).** "Fault-tolerant spanners for general graphs." *SIAM Journal on Computing*, 44(1), pp. 28–44.
-8. **Coppersmith, D. & Elkin, M. (2006).** "Sparse sourcewise and pairwise distance preservers." *SIAM Journal on Discrete Mathematics*, 20(2), pp. 463–501.
+8. **Coppersmith, D. \& Elkin, M. (2006).** "Sparse sourcewise and pairwise distance preservers." *SIAM Journal on Discrete Mathematics*, 20(2), pp. 463–501.
 9. **Das, G., et al. (1993).** "Applications of spanners in VLSI design." *Proceedings of the 9th Annual Symposium on Computational Geometry*, pp. 296–305.
-10. **Elkin, M. & Peleg, D. (2004).** "$(1+\epsilon, \beta)$-spanners in linear time." *SIAM Journal on Computing*, 33(2), pp. 377–401.
-11. **Goldberg, A. V. & Harrelson, C. (2005).** "Computing the shortest path: A* search meets graph theory." *SODA*, 5, pp. 156–165.
-12. **Halperin, E. & Zwick, U. (2003).** "A polynomial time approximation algorithm for the minimum stretch spanning tree problem." *SIAM Journal on Discrete Mathematics*, 16(4), pp. 562–581.
-13. **Kapralov, M. & Woodruff, D. P. (2014).** "Spanners and sparsifiers in dynamic streams." *Proceedings of the 2014 ACM Symposium on Principles of Distributed Computing*, pp. 272–281.
-14. **Peleg, D. & Schaffer, A. A. (1989).** "Graph spanners." *Journal of Graph Theory*, 13(1), pp. 99–116.
-15. **Peleg, D. & Ullman, J. D. (1989).** "An optimal synchronizer for the hypercube." *Proceedings of the 21st Annual ACM Symposium on Theory of Computing*, pp. 77–85.
+10. **Elkin, M. \& Peleg, D. (2004).** "$(1+\epsilon, \beta)$-spanners in linear time." *SIAM Journal on Computing*, 33(2), pp. 377–401.
+11. **Goldberg, A. V. \& Harrelson, C. (2005).** "Computing the shortest path: A* search meets graph theory." *SODA*, 5, pp. 156–165.
+12. **Halperin, E. \& Zwick, U. (2003).** "A polynomial time approximation algorithm for the minimum stretch spanning tree problem." *SIAM Journal on Discrete Mathematics*, 16(4), pp. 562–581.
+13. **Kapralov, M. \& Woodruff, D. P. (2014).** "Spanners and sparsifiers in dynamic streams." *Proceedings of the 2014 ACM Symposium on Principles of Distributed Computing*, pp. 272–281.
+14. **Peleg, D. \& Schaffer, A. A. (1989).** "Graph spanners." *Journal of Graph Theory*, 13(1), pp. 99–116.
+15. **Peleg, D. \& Ullman, J. D. (1989).** "An optimal synchronizer for the hypercube." *Proceedings of the 21st Annual ACM Symposium on Theory of Computing*, pp. 77–85.
 16. **Roditty, L., et al. (2004).** "Deterministic constructions of distance oracles and spanners." *ICALP*, pp. 929–940.
-17. **Thorup, M. & Zwick, U. (2001).** "Approximate distance oracles." *Journal of the ACM (JACM)*, 33(1), pp. 1–10.
+17. **Thorup, M. \& Zwick, U. (2001).** "Approximate distance oracles." *Journal of the ACM (JACM)*, 33(1), pp. 1–10.
 18. **Woodruff, D. P. (2010).** "Additive spanners in nearly linear time." *ICALP*, pp. 584–595.
 
 
-## Appendix: Mathematical Glossary
+# Appendix: Mathematical Glossary
 
-| Term | Notation | Definition |
-|:-----|:---------|:-----------|
+
+
 | **Stretch Factor** | $t$ | The maximum ratio $d_H(u,v) / d_G(u,v)$. |
 | **Edge Density** | $\rho$ | The ratio of spanner edges to original edges ($|E'|/|E|$). |
 | **Girth** | $g$ | The length of the shortest cycle in a graph. |

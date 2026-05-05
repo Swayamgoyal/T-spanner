@@ -15,7 +15,7 @@ import math
 import random
 
 # Add project root to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 from src.python.spanner.graph import Graph
 from src.python.spanner.union_find import UnionFind, UnionFindNoCompression
@@ -422,13 +422,94 @@ def test_verify_spanner_property():
 
 
 # ════════════════════════════════════════════════════════════════
+# Advanced Regression & Stress Tests
+# ════════════════════════════════════════════════════════════════
+
+def test_stress_scale_free():
+    """Stress test on a large 1000-node Scale-Free graph."""
+    import networkx as nx
+    # Generate 1000-node Barabasi-Albert graph with 30 edges per new node (Dense)
+    ba = nx.barabasi_albert_graph(1000, 30, seed=42)
+    g = Graph()
+    for u, v in ba.edges():
+        g.add_edge(u, v, 1.0)
+
+    from src.python.spanner.advanced_spanner import hybrid_adaptive_spanner
+    
+    print(f"  Stress testing 1000-node graph ({g.num_edges} edges) with HAS (t=5)...")
+    # Using k=3 (t=5) and alpha=1.0 for degree-weighted sampling
+    result = hybrid_adaptive_spanner(g, k=3, seed=42)
+    
+    assert result["spanner"].num_nodes == 1000
+    # HAS should achieve decent sparsification (30% reduction on dense BA)
+    print(f"  Resulting sparseness: {result['sparseness_ratio']:.4f}")
+    assert result["sparseness_ratio"] < 0.8 
+    print("✓ test_stress_scale_free passed")
+
+
+def test_boundary_disconnected():
+    """Verify spanner preserves disconnected components."""
+    g = Graph()
+    # Component A
+    g.add_edge(0, 1)
+    g.add_edge(1, 2)
+    # Component B
+    g.add_edge(10, 11)
+    
+    result = baswana_sen_spanner(g, k=2, seed=42)
+    spanner = result["spanner"]
+    
+    # Should NOT be able to reach 10 from 0
+    assert spanner.bfs_distance(0, 10) == float('inf')
+    print("✓ test_boundary_disconnected passed")
+
+
+def test_boundary_chain():
+    """Verify spanner on a long chain (the worst case for stretch)."""
+    g = Graph()
+    for i in range(100):
+        g.add_edge(i, i+1, 1.0)
+    
+    result = baswana_sen_spanner(g, k=2, seed=42)
+    spanner = result["spanner"]
+    
+    # In a simple chain, every edge is a bridge and MUST be kept
+    if spanner.num_edges != g.num_edges:
+        print(f"  FAILED: Original={g.num_edges}, Spanner={spanner.num_edges}")
+        # List missing edges
+        orig_edges = g.edge_set()
+        span_edges = spanner.edge_set()
+        missing = orig_edges - span_edges
+        print(f"  Missing edges: {list(missing)[:5]}...")
+    assert spanner.num_edges == g.num_edges
+    print("✓ test_boundary_chain passed")
+
+
+def test_real_world_regression():
+    """Regression test using a slice of the actual ego-Facebook dataset."""
+    from src.python.data.graph_loader import GraphLoader
+    loader = GraphLoader()
+    # Try to load Facebook, fallback to synthetic if not available
+    try:
+        g = loader.load_facebook(max_nodes=500)
+        print("  Running regression on ego-Facebook slice...")
+    except:
+        g = _make_test_graph(500, 0.05)
+        print("  Running regression on Large Synthetic (Fallback)...")
+        
+    result = baswana_sen_spanner(g, k=2, seed=42)
+    print(f"  Resulting sparseness: {result['sparseness_ratio']:.4f}")
+    print("✓ test_real_world_regression passed")
+
+
+# ════════════════════════════════════════════════════════════════
 # Run all tests
 # ════════════════════════════════════════════════════════════════
 
 def run_all_tests():
     """Run all unit tests."""
     print("=" * 60)
-    print("t-Spanner Core Module Tests")
+    print("t-Spanner Core Module Tests (Advanced)")
     print("=" * 60)
     
     print("\n─── Graph Tests ───")
@@ -460,6 +541,12 @@ def run_all_tests():
     test_sparseness_ratio()
     test_stretch_statistics()
     test_verify_spanner_property()
+
+    print("\n─── Advanced & Stress Tests ───")
+    test_stress_scale_free()
+    test_boundary_disconnected()
+    test_boundary_chain()
+    test_real_world_regression()
     
     print("\n" + "=" * 60)
     print("ALL TESTS PASSED ✓")

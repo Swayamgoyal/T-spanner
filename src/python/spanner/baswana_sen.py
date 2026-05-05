@@ -230,6 +230,28 @@ def baswana_sen_spanner(
             "unclustered_vertices": sum(1 for v in cluster if cluster[v] is None),
         })
     
+    # ---- Final phase 2: edges between clusters ----
+    # For every edge (u, v) where u and v are in different clusters,
+    # we must ensure at least one edge exists between these clusters.
+    # Actually, the paper says: for every cluster, add lightest edge to every neighboring cluster.
+    cluster_edges: Dict[Tuple[int, int], Tuple[int, int, float]] = {}
+    for v in nodes:
+        u_cluster = cluster[v]
+        if u_cluster is None: continue
+        
+        for nbr, w in graph.neighbors(v):
+            v_cluster = cluster[nbr]
+            if v_cluster is None or u_cluster == v_cluster: continue
+            
+            # Key for cluster pair
+            c_key = (min(u_cluster, v_cluster), max(u_cluster, v_cluster))
+            if c_key not in cluster_edges or w < cluster_edges[c_key][2]:
+                cluster_edges[c_key] = (v, nbr, w)
+    
+    for u, v, w in cluster_edges.values():
+        if add_spanner_edge(u, v, w):
+            final_edges_added += 1
+    
     # ---- Build spanner Graph object ----
     spanner = Graph()
     spanner_edges_list = []

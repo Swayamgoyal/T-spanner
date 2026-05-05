@@ -389,7 +389,33 @@ Standard Baswana-Sen is topology-blind. Our **Hybrid Adaptive Spanner (HAS)** op
 2. **Greedy Edge Pruning**: A post-hoc BFS-based pass that removes edges if the stretch is still satisfied.
 3. **Topology-Aware Tuning**: Automatic parameter adjustment for Scale-free vs. Grid graphs.
 
-### 4.2 Engineering Rigor: Data Structures & Testing
+### 4.2 The HAS Algorithm Pseudocode
+
+```
+Algorithm: HYBRID-ADAPTIVE-SPANNER (HAS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Input:  Graph G = (V, E, w), stretch t, adaptive factor α
+Output: Optimized t-spanner H
+
+1.  // PHASE 1: Degree-Weighted Sampling
+    For each v ∈ V:
+        Score(v) = deg(v)^α / Σ(deg(u)^α)
+        If Random(0,1) < Score(v): v becomes a "Priority Center"
+
+2.  // PHASE 2: Baswana-Sen Core
+    H = BASWANA-SEN(G, t, centers=Priority Centers)
+
+3.  // PHASE 3: Greedy Post-Pruning (Topological Refinement)
+    Sort edges e ∈ H by weight (descending)
+    For each (u, v) ∈ E(H):
+        H' = H \ {(u, v)}
+        If d_H'(u, v) ≤ t · w(u, v):
+            H = H' // Permanently prune redundant edge
+            
+4.  Return H
+```
+
+### 4.3 Engineering Rigor: Data Structures & Testing
 We implemented a **20-test unit suite** (`tests/test_core.py`) that verifies:
 - **Stretch Invariant**: Ensures no path in $H$ ever exceeds $t \times d_G$.
 - **Connectedness**: Ensures the spanner never disconnects a previously connected graph.
@@ -674,17 +700,42 @@ While our current implementation is highly optimized, there are two frontier tec
 ### 12.1 GPU-Parallel Baswana-Sen (CUDA Acceleration)
 Currently, our C++ version is $O(m)$ on a single CPU core. However, for a network the size of the global internet, we need massive parallelism. 
 
-**What we're proposing**: In each phase of Baswana-Sen, every node $v$ independently decides whether to become a center based on probability $p$. This is an **Embarrassingly Parallel** task.
-1.  **Parallel Sampling**: Each GPU thread handles one node and flips a "random coin" in the kernel.
-2.  **Parallel Edge Relaxation**: Instead of checking neighbors one-by-one, we can use **Parallel BFS** where each level of the search is a massive GPU sweep.
+```
+Algorithm: CUDA-PARALLEL-SPANNER-SWEEP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1.  Define NodeBlock <<grid, threads>>:
+2.      tid = global_thread_id
+3.      If tid < n:
+4.          State[tid] = Atomic_Flip_Coin(p) // Independent sampling
+5.          SyncThreads()
+6.
+7.  Define EdgeRelaxation <<grid, threads>>:
+8.      eid = global_thread_id
+9.      If eid < m:
+10.         (u, v) = Edges[eid]
+11.         If Cluster[u] != Cluster[v]:
+12.             Atomic_Update_Min_Edge(Cluster[u], v, weight)
+```
+
 **The Math**: By moving from a CPU to a GPU with $P$ cores, we theoretically reduce the runtime from $O(m)$ to $O(m/P + \log P)$. For a modern NVIDIA H100, this could mean constructing a 3-spanner for the entire California road network in under **5 milliseconds**.
 
 ### 12.2 GNN-Based "Learned" Spanners
 Traditional Baswana-Sen uses **Uniform Random Sampling** ($p = n^{-1/k}$). This is fair, but it's not "smart." It might accidentally sample a node that is stuck in a corner and ignore a node that is a critical bridge.
 
+```
+Algorithm: GNN-LEARNED-SAMPLING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1.  X = [deg(V), centrality(V), clustering(V)] // Feature matrix
+2.  For layer l = 1 to L:
+3.      H_l = ReLU( D⁻¹/²AD⁻¹/² H_{l-1} W_l )  // Graph Convolution
+4.  Scores = Softmax( H_L · W_out )            // Sampling Probabilities
+5.  S = Sample_Nodes(V, p=Scores)              // Intelligent Centers
+6.  Return BASWANA-SEN(G, S)
+```
+
 **What we're proposing**: Replace the random sampler with a **Graph Neural Network (GNN)**.
 1.  **Feature Learning**: The GNN takes the local structure (degree, centrality, clustering) and generates a embedding vector $h_v$ for each node.
-2.  **Probability Prediction**: A simple softmax layer predicts the probability that node $v$ should be a cluster center:
+2.  **Probability Prediction**: A simple softmax layer predicts the probability that node v should be a cluster center:
     $$P(v \in S) = \sigma(W \cdot h_v + b)$$
 3.  **The Result**: The GNN "learns" to pick nodes that are structurally important (like bridges or major hubs). In our preliminary thought-models, this could reduce the edge count by another **10-15%** while keeping the exact same stretch. It moves the algorithm from "Randomized" to "Intelligent."
 

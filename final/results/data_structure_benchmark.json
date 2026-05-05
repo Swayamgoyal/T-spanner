@@ -1,0 +1,20 @@
+[
+  {
+    "n": 50,
+    "m": 120,
+    "list_time_ms": 0.18,
+    "list_memory_bytes": 25256,
+    "matrix_build_time_ms": 0.07,
+    "matrix_memory_bytes": 23272,
+    "memory_ratio": 0.92
+  },
+  {
+    "n": 100,
+    "m": 224,
+    "list_time_ms": 0.37,
+    "list_memory_bytes": 52304,
+    "matrix_build_time_ms": 0.11,
+    "matrix_memory_bytes": 86520,
+    "memory_ratio": 1.65
+  }
+]

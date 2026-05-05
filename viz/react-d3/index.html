@@ -429,6 +429,7 @@
         <div class="control-group">
             <select id="algorithm">
                 <option value="baswana-sen" selected>Baswana-Sen</option>
+                <option value="hybrid">Hybrid Adaptive (HAS)</option>
                 <option value="greedy">Greedy (BFS)</option>
             </select>
         </div>
@@ -809,6 +810,233 @@ function greedySpanner(graph, t) {
     };
 }
 
+// ─── Hybrid Adaptive Spanner (HAS) ───────────────────────────
+
+function hybridAdaptiveSpanner(graph, k, seed) {
+    const rng = mulberry32(seed);
+    const start = performance.now();
+    const n = graph.nodes.length;
+    const t = 2 * k - 1;
+
+    // Build adjacency
+    const adj = {};
+    for (const node of graph.nodes) adj[node.id] = [];
+    for (const e of graph.edges) {
+        const u = typeof e.source === 'object' ? e.source.id : e.source;
+        const v = typeof e.target === 'object' ? e.target.id : e.target;
+        adj[u].push({node: v, weight: e.weight || 1});
+        adj[v].push({node: u, weight: e.weight || 1});
+    }
+
+    // Compute degrees & topology detection
+    const degrees = {};
+    let maxDeg = 0;
+    for (const node of graph.nodes) {
+        degrees[node.id] = adj[node.id].length;
+        if (degrees[node.id] > maxDeg) maxDeg = degrees[node.id];
+    }
+    const avgDeg = graph.edges.length * 2 / Math.max(n, 1);
+    const degValues = Object.values(degrees);
+    const stdDeg = Math.sqrt(degValues.reduce((s, d) => s + (d - avgDeg) ** 2, 0) / Math.max(degValues.length, 1));
+    const cv = stdDeg / Math.max(avgDeg, 1);
+    const topology = cv > 1.0 ? 'scale-free' : cv < 0.3 ? 'grid-like' : 'random';
+    const samplingBoost = topology === 'scale-free' ? 1.5 : topology === 'grid-like' ? 0.9 : 1.0;
+
+    const baseP = n > 1 ? Math.pow(n, -1.0 / k) : 1.0;
+    const p = Math.min(baseP * samplingBoost, 0.95);
+
+    // Phase 0: every vertex is its own cluster
+    let cluster = {};
+    for (const node of graph.nodes) cluster[node.id] = node.id;
+
+    const spannerEdges = new Set();
+    const spannerEdgeList = [];
+    const phaseLogs = [];
+    const phaseEdges = [];
+
+    function addEdge(u, v) {
+        const key = Math.min(u, v) + ',' + Math.max(u, v);
+        if (!spannerEdges.has(key)) {
+            spannerEdges.add(key);
+            spannerEdgeList.push({source: u, target: v, weight: 1});
+            return true;
+        }
+        return false;
+    }
+
+    // Phases 1 to k-1 with DEGREE-WEIGHTED SAMPLING
+    for (let phase = 1; phase < k; phase++) {
+        let edgesAdded = 0, clustersSurviving = 0, verticesUnclustered = 0;
+        const phaseNewEdges = [];
+
+        const currentCenters = new Set(Object.values(cluster).filter(c => c !== null));
+        const sampled = new Set();
+        for (const c of currentCenters) {
+            // Degree-weighted: high-degree nodes more likely to be sampled
+            const degreeFactor = (degrees[c] || 1) / Math.max(maxDeg, 1);
+            const adjustedP = Math.min(p * (0.5 + degreeFactor), 0.95);
+            if (rng() < adjustedP) {
+                sampled.add(c);
+                clustersSurviving++;
+            }
+        }
+
+        const newCluster = {};
+        for (const node of graph.nodes) {
+            const v = node.id;
+            if (cluster[v] === null) { newCluster[v] = null; continue; }
+
+            const lightestToCluster = {};
+            for (const {node: u, weight: w} of adj[v]) {
+                const uc = cluster[u];
+                if (uc === null) continue;
+                if (!(uc in lightestToCluster) || w < lightestToCluster[uc].w) {
+                    lightestToCluster[uc] = {u, w};
+                }
+            }
+
+            if (sampled.has(cluster[v])) {
+                newCluster[v] = cluster[v];
+                for (const [nc, {u}] of Object.entries(lightestToCluster)) {
+                    if (parseInt(nc) !== cluster[v] && !sampled.has(parseInt(nc))) {
+                        if (addEdge(v, u)) { edgesAdded++; phaseNewEdges.push({source: v, target: u}); }
+                    }
+                }
+            } else {
+                let bestU = null, bestW = Infinity, bestC = null;
+                for (const [nc, {u, w}] of Object.entries(lightestToCluster)) {
+                    if (sampled.has(parseInt(nc)) && w < bestW) { bestU = u; bestW = w; bestC = parseInt(nc); }
+                }
+                if (bestU !== null) {
+                    newCluster[v] = bestC;
+                    if (addEdge(v, bestU)) { edgesAdded++; phaseNewEdges.push({source: v, target: bestU}); }
+                    for (const [nc, {u}] of Object.entries(lightestToCluster)) {
+                        if (parseInt(nc) !== bestC && !sampled.has(parseInt(nc))) {
+                            if (addEdge(v, u)) { edgesAdded++; phaseNewEdges.push({source: v, target: u}); }
+                        }
+                    }
+                } else {
+                    newCluster[v] = null;
+                    verticesUnclustered++;
+                    for (const [nc, {u}] of Object.entries(lightestToCluster)) {
+                        if (addEdge(v, u)) { edgesAdded++; phaseNewEdges.push({source: v, target: u}); }
+                    }
+                }
+            }
+        }
+        cluster = newCluster;
+        phaseEdges.push(phaseNewEdges);
+        phaseLogs.push({phase, edgesAdded, clustersSurviving, verticesUnclustered, sampling: 'degree-weighted'});
+    }
+
+    // Final: unclustered add all edges
+    const finalEdges = [];
+    for (const node of graph.nodes) {
+        if (cluster[node.id] === null) {
+            for (const {node: u} of adj[node.id]) {
+                if (addEdge(node.id, u)) finalEdges.push({source: node.id, target: u});
+            }
+        }
+    }
+    phaseEdges.push(finalEdges);
+    phaseLogs.push({phase: 'final', edgesAdded: finalEdges.length});
+
+    const edgesBeforePruning = spannerEdges.size;
+
+    // GREEDY PRUNING PASS — remove redundant edges
+    let edgesPruned = 0;
+    const edgesToCheck = [...spannerEdges].slice(0, Math.max(1, Math.floor(spannerEdges.size * 0.3)));
+
+    // Build spanner adjacency for BFS
+    const spanAdj = {};
+    for (const node of graph.nodes) spanAdj[node.id] = [];
+    for (const key of spannerEdges) {
+        const [u, v] = key.split(',').map(Number);
+        spanAdj[u].push(v); spanAdj[v].push(u);
+    }
+
+    function bfsDist(src, dst, skipKey) {
+        if (src === dst) return 0;
+        const visited = new Set([src]);
+        const queue = [{n: src, d: 0}];
+        let h = 0;
+        while (h < queue.length) {
+            const {n: cur, d} = queue[h++];
+            for (const nb of spanAdj[cur]) {
+                const ek = Math.min(cur, nb) + ',' + Math.max(cur, nb);
+                if (ek === skipKey) continue;
+                if (!spannerEdges.has(ek)) continue;
+                if (nb === dst) return d + 1;
+                if (!visited.has(nb)) { visited.add(nb); queue.push({n: nb, d: d + 1}); }
+            }
+        }
+        return Infinity;
+    }
+
+    // BFS on original for original distances
+    function bfsOrigDist(src, dst) {
+        if (src === dst) return 0;
+        const visited = new Set([src]);
+        const queue = [{n: src, d: 0}];
+        let h = 0;
+        while (h < queue.length) {
+            const {n: cur, d} = queue[h++];
+            for (const {node: nb} of adj[cur]) {
+                if (nb === dst) return d + 1;
+                if (!visited.has(nb)) { visited.add(nb); queue.push({n: nb, d: d + 1}); }
+            }
+        }
+        return Infinity;
+    }
+
+    const removedEdges = [];
+    for (const key of edgesToCheck) {
+        const [u, v] = key.split(',').map(Number);
+        const dOrig = bfsOrigDist(u, v);
+        if (dOrig <= 0 || dOrig === Infinity) continue;
+        const dWithout = bfsDist(u, v, key);
+        // Strict less-than to be conservative (avoid cascading violations)
+        if (dWithout < t * dOrig) {
+            spannerEdges.delete(key);
+            const idx = spannerEdgeList.findIndex(e => {
+                const eu = typeof e.source === 'object' ? e.source.id : e.source;
+                const ev = typeof e.target === 'object' ? e.target.id : e.target;
+                return Math.min(eu, ev) + ',' + Math.max(eu, ev) === key;
+            });
+            if (idx >= 0) spannerEdgeList.splice(idx, 1);
+            removedEdges.push({key, u, v});
+            edgesPruned++;
+        }
+    }
+    // Verification pass: re-add any edge whose removal caused cascading violations
+    for (const {key, u, v} of removedEdges) {
+        // Check if current spanner still maintains stretch for this pair
+        const dOrig = bfsOrigDist(u, v);
+        // Build temporary full BFS (no skip)
+        const dSpanner = bfsDist(u, v, '');
+        if (dSpanner > t * dOrig) {
+            // Re-add this edge
+            spannerEdges.add(key);
+            spannerEdgeList.push({source: u, target: v, weight: 1});
+            edgesPruned--;
+        }
+    }
+
+    phaseEdges.push([]);
+    phaseLogs.push({phase: 'pruning', edgesAdded: -edgesPruned, edgesPruned, edgesBeforePruning, topology});
+
+    const time = performance.now() - start;
+    return {
+        spannerEdges: spannerEdgeList,
+        spannerEdgeSet: spannerEdges,
+        clusterAssignments: cluster,
+        phaseLogs,
+        phaseEdges,
+        constructionTime: time,
+        sparseness: spannerEdgeList.length / Math.max(graph.edges.length, 1),
+    };
+}
+
 // ─── Visualization ───────────────────────────────────────────
 
 function renderGraph() {
@@ -836,56 +1064,58 @@ function renderGraph() {
     const clusterIds = [...new Set(Object.values(clusters).filter(c => c !== null))];
     const colorScale = d3.scaleOrdinal(d3.schemeSet3).domain(clusterIds);
     
-    // Edges
+    // Deep-copy ALL edges — forceLink WILL mutate these (resolving source/target
+    // from integers to node objects), which is exactly what the tick handler needs
+    const allEdgeCopies = graph.edges.map(e => ({
+        source: typeof e.source === 'object' ? e.source.id : e.source,
+        target: typeof e.target === 'object' ? e.target.id : e.target,
+        weight: e.weight || 1
+    }));
+    
+    const hasSpanner = spannerSet.size > 0;
     const edgeGroup = g.append('g');
     
-    // Non-spanner edges (faint dotted)
-    const nonSpannerEdges = graph.edges.filter(e => {
-        const u = typeof e.source === 'object' ? e.source.id : e.source;
-        const v = typeof e.target === 'object' ? e.target.id : e.target;
-        const key = Math.min(u, v) + ',' + Math.max(u, v);
-        return !spannerSet.has(key);
-    });
-    
-    const spannerEdgeData = graph.edges.filter(e => {
-        const u = typeof e.source === 'object' ? e.source.id : e.source;
-        const v = typeof e.target === 'object' ? e.target.id : e.target;
-        const key = Math.min(u, v) + ',' + Math.max(u, v);
-        return spannerSet.has(key);
-    });
-    
-    const nonSpannerLinks = edgeGroup.selectAll('.edge-removed')
-        .data(nonSpannerEdges)
-        .enter().append('line')
-        .attr('class', 'edge-removed')
-        .attr('stroke', '#2a2a3a')
-        .attr('stroke-width', 0.5)
-        .attr('stroke-dasharray', '3,3')
-        .attr('opacity', 0.4);
-    
-    const spannerLinks = edgeGroup.selectAll('.edge-spanner')
-        .data(spannerEdgeData)
-        .enter().append('line')
-        .attr('class', 'edge-spanner')
-        .attr('stroke', '#667eea')
-        .attr('stroke-width', 2)
-        .attr('opacity', 0.8)
-        .attr('stroke-linecap', 'round');
+    if (hasSpanner) {
+        // Classify copies BEFORE forceLink mutates them
+        const nonSpannerCopies = allEdgeCopies.filter(e => {
+            const key = Math.min(e.source, e.target) + ',' + Math.max(e.source, e.target);
+            return !spannerSet.has(key);
+        });
+        const spannerCopies = allEdgeCopies.filter(e => {
+            const key = Math.min(e.source, e.target) + ',' + Math.max(e.source, e.target);
+            return spannerSet.has(key);
+        });
+        
+        edgeGroup.selectAll('.edge-removed')
+            .data(nonSpannerCopies).enter().append('line')
+            .attr('class', 'edge-removed')
+            .attr('stroke', '#4a4a6a').attr('stroke-width', 0.8)
+            .attr('stroke-dasharray', '4,4').attr('opacity', 0.5);
+        
+        edgeGroup.selectAll('.edge-spanner')
+            .data(spannerCopies).enter().append('line')
+            .attr('class', 'edge-spanner')
+            .attr('stroke', '#667eea').attr('stroke-width', 2)
+            .attr('opacity', 0.8).attr('stroke-linecap', 'round');
+    } else {
+        // No spanner — show ALL edges as visible original edges
+        edgeGroup.selectAll('.edge-original')
+            .data(allEdgeCopies).enter().append('line')
+            .attr('class', 'edge-original')
+            .attr('stroke', '#5a6acf').attr('stroke-width', 1.2).attr('opacity', 0.5);
+    }
     
     // Nodes
     const nodeGroup = g.append('g');
     const nodeElements = nodeGroup.selectAll('circle')
-        .data(graph.nodes)
-        .enter().append('circle')
+        .data(graph.nodes).enter().append('circle')
         .attr('r', graph.nodes.length > 150 ? 4 : graph.nodes.length > 80 ? 5 : 7)
         .attr('fill', d => {
             const c = clusters[d.id];
             if (c === null || c === undefined) return '#f87171';
             return colorScale(c);
         })
-        .attr('stroke', '#fff')
-        .attr('stroke-width', 0.5)
-        .attr('cursor', 'pointer')
+        .attr('stroke', '#fff').attr('stroke-width', 0.5).attr('cursor', 'pointer')
         .on('mouseover', function(event, d) {
             d3.select(this).attr('r', graph.nodes.length > 150 ? 6 : 9);
             const tooltip = document.getElementById('tooltip');
@@ -916,17 +1146,15 @@ function renderGraph() {
             })
         );
     
-    // Force simulation
+    // Force simulation — allEdgeCopies are used as BOTH line data and forceLink data.
+    // forceLink resolves source/target integers to node objects, so tick can read .x/.y
     simulation = d3.forceSimulation(graph.nodes)
-        .force('link', d3.forceLink(graph.edges).id(d => d.id).distance(30))
+        .force('link', d3.forceLink(allEdgeCopies).id(d => d.id).distance(30))
         .force('charge', d3.forceManyBody().strength(-80))
         .force('center', d3.forceCenter(width / 2, height / 2))
         .force('collision', d3.forceCollide(8))
         .on('tick', () => {
-            nonSpannerLinks
-                .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
-                .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
-            spannerLinks
+            edgeGroup.selectAll('line')
                 .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
                 .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
             nodeElements
@@ -1014,25 +1242,88 @@ function loadGraphPreset() {
 }
 
 function buildSpanner() {
-    const t = parseInt(document.getElementById('t-slider').value);
-    const k = Math.ceil((t + 1) / 2);
-    const seed = parseInt(document.getElementById('seed').value);
-    const algo = document.getElementById('algorithm').value;
-    
-    const start = performance.now();
-    
-    if (algo === 'baswana-sen') {
-        spannerResult = baswaanaSen(graph, k, seed);
-    } else {
-        spannerResult = greedySpanner(graph, t);
+    try {
+        const t = parseInt(document.getElementById('t-slider').value);
+        const k = Math.ceil((t + 1) / 2);
+        const seed = parseInt(document.getElementById('seed').value);
+        const algo = document.getElementById('algorithm').value;
+        
+        // Normalize edges — D3 forceLink mutates source/target from int to object
+        graph.edges = graph.edges.map(e => ({
+            source: typeof e.source === 'object' ? e.source.id : e.source,
+            target: typeof e.target === 'object' ? e.target.id : e.target,
+            weight: e.weight || 1
+        }));
+        
+        if (algo === 'baswana-sen') {
+            spannerResult = baswaanaSen(graph, k, seed);
+        } else if (algo === 'hybrid') {
+            spannerResult = hybridAdaptiveSpanner(graph, k, seed);
+        } else {
+            spannerResult = greedySpanner(graph, t);
+        }
+        
+        renderGraph();
+        updatePhaseLogs();
+        document.getElementById('btn-replay').disabled = false;
+        document.getElementById('btn-phase-play').disabled = false;
+        updateMetrics();
+    } catch(e) {
+        console.error('buildSpanner error:', e);
+        // Fallback: at least show the graph without spanner
+        spannerResult = null;
+        renderGraph();
+        updateMetrics();
     }
-    
-    updateMetrics();
-    renderGraph();
-    updatePhaseLogs();
-    
-    document.getElementById('btn-replay').disabled = false;
-    document.getElementById('btn-phase-play').disabled = false;
+}
+
+function validateStretch() {
+    // Quick BFS-based stretch validation on 50 sampled pairs
+    if (!spannerResult || graph.nodes.length < 2) return {valid: true, maxStretch: 0};
+    const t = parseInt(document.getElementById('t-slider').value);
+    const n = graph.nodes.length;
+    const adj_orig = {}, adj_span = {};
+    for (const nd of graph.nodes) { adj_orig[nd.id] = []; adj_span[nd.id] = []; }
+    for (const e of graph.edges) {
+        const u = typeof e.source === 'object' ? e.source.id : e.source;
+        const v = typeof e.target === 'object' ? e.target.id : e.target;
+        adj_orig[u].push(v); adj_orig[v].push(u);
+    }
+    for (const e of spannerResult.spannerEdges) {
+        const u = typeof e.source === 'object' ? e.source.id : e.source;
+        const v = typeof e.target === 'object' ? e.target.id : e.target;
+        adj_span[u].push(v); adj_span[v].push(u);
+    }
+    function bfs(adjList, src, dst) {
+        if (src === dst) return 0;
+        const visited = new Set([src]);
+        const queue = [{n: src, d: 0}];
+        let h = 0;
+        while (h < queue.length) {
+            const {n: cur, d} = queue[h++];
+            for (const nb of (adjList[cur] || [])) {
+                if (nb === dst) return d + 1;
+                if (!visited.has(nb)) { visited.add(nb); queue.push({n: nb, d: d + 1}); }
+            }
+        }
+        return Infinity;
+    }
+    let maxStretch = 0, violations = 0;
+    const rng = mulberry32(42);
+    const numPairs = Math.min(50, n * (n - 1) / 2);
+    for (let i = 0; i < numPairs; i++) {
+        const u = graph.nodes[Math.floor(rng() * n)].id;
+        const v = graph.nodes[Math.floor(rng() * n)].id;
+        if (u === v) continue;
+        const dO = bfs(adj_orig, u, v);
+        if (dO === 0 || dO === Infinity) continue;
+        const dS = bfs(adj_span, u, v);
+        if (dS === Infinity) { violations++; continue; }
+        const s = dS / dO;
+        if (s > maxStretch) maxStretch = s;
+        if (s > t + 0.01) violations++;
+    }
+    return {valid: violations === 0, maxStretch: maxStretch.toFixed(2), violations};
 }
 
 function updateMetrics() {
@@ -1043,8 +1334,14 @@ function updateMetrics() {
         document.getElementById('m-spanner-edges').textContent = spannerResult.spannerEdges.length;
         document.getElementById('m-ratio').textContent = spannerResult.sparseness.toFixed(3);
         document.getElementById('m-time').textContent = spannerResult.constructionTime.toFixed(1);
-        document.getElementById('m-stretch').innerHTML = 
-            '<span class="status-badge status-valid">Valid</span>';
+        const sv = validateStretch();
+        if (sv.valid) {
+            document.getElementById('m-stretch').innerHTML =
+                `<span class="status-badge status-valid">Valid (${sv.maxStretch})</span>`;
+        } else {
+            document.getElementById('m-stretch').innerHTML =
+                `<span class="status-badge status-warning">${sv.violations} violations</span>`;
+        }
     } else {
         document.getElementById('m-spanner-edges').textContent = '-';
         document.getElementById('m-ratio').textContent = '-';
@@ -1057,15 +1354,25 @@ function updatePhaseLogs() {
     if (!spannerResult) return;
     const container = document.getElementById('phase-logs');
     container.innerHTML = spannerResult.phaseLogs.map(log => {
+        if (log.phase === 'pruning') {
+            return `<div style="margin-bottom:6px"><b>Pruning</b>: −${log.edgesPruned} edges removed (${log.edgesBeforePruning}→${log.edgesBeforePruning - log.edgesPruned}), topology: <em>${log.topology}</em></div>`;
+        }
         if (log.phase === 'final' || log.phase === 'greedy') {
             return `<div style="margin-bottom:6px"><b>${log.phase === 'final' ? 'Final' : 'Greedy'}</b>: +${log.edgesAdded} edges</div>`;
         }
-        return `<div style="margin-bottom:6px"><b>Phase ${log.phase}</b>: +${log.edgesAdded} edges, ${log.clustersSurviving} clusters, ${log.verticesUnclustered} unclustered</div>`;
+        const samplingNote = log.sampling ? ` <span style="color:#a78bfa">[${log.sampling}]</span>` : '';
+        return `<div style="margin-bottom:6px"><b>Phase ${log.phase}</b>: +${log.edgesAdded} edges, ${log.clustersSurviving} clusters, ${log.verticesUnclustered} unclustered${samplingNote}</div>`;
     }).join('');
 }
 
 function resetView() {
     spannerResult = null;
+    // Normalize edges back to integers
+    graph.edges = graph.edges.map(e => ({
+        source: typeof e.source === 'object' ? e.source.id : e.source,
+        target: typeof e.target === 'object' ? e.target.id : e.target,
+        weight: e.weight || 1
+    }));
     document.getElementById('btn-replay').disabled = true;
     document.getElementById('btn-phase-play').disabled = true;
     updateMetrics();
@@ -1127,9 +1434,10 @@ document.getElementById('file-upload').addEventListener('change', function(e) {
     reader.readAsText(file);
 });
 
-// Initial load
+// Initial load — auto-build spanner so users see the algorithm immediately
 loadGraphPreset();
 </script>
 
 </body>
 </html>
+    

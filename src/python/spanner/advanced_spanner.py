@@ -272,6 +272,7 @@ def hybrid_adaptive_spanner(
     #   Since |E_s| << |E|, this is much cheaper than full greedy from scratch.
 
     edges_pruned = 0
+    num_to_check = 0
 
     if enable_pruning and len(spanner_edges_set) > 0:
         t = 2 * k - 1
@@ -314,11 +315,28 @@ def hybrid_adaptive_spanner(
             d_original = graph.bfs_distance(u, v)
 
             if d_original > 0 and d_original < float('inf'):
-                if d_without <= t * d_original:
-                    # SAFE TO REMOVE — stretch is maintained
+                if d_without < t * d_original:
+                    # SAFE TO REMOVE — stretch is maintained (strict < to avoid cascading)
                     spanner_edges_set.remove(edge)
                     del spanner_edge_weights[edge]
                     edges_pruned += 1
+
+        # Verification pass: re-add edges if cascading removals broke stretch
+        for edge in edges_to_check:
+            if edge in spanner_edges_set:
+                continue  # wasn't removed
+            u, v = edge
+            d_original = graph.bfs_distance(u, v)
+            if d_original <= 0 or d_original == float('inf'):
+                continue
+            d_current = _bfs_distance_on_edge_set(
+                u, v, nodes, spanner_edges_set, spanner_edge_weights
+            )
+            if d_current > t * d_original:
+                # Re-add: removal caused violation
+                spanner_edges_set.add(edge)
+                spanner_edge_weights[edge] = graph.get_edge_weight(u, v)
+                edges_pruned -= 1
 
     if log_phases:
         phase_logs.append({

@@ -195,7 +195,7 @@ SpannerResult baswana_sen(Graph& g, int k, int seed = 42) {
             }
         }
         
-        // Step 2: Attach — non-sampled vertices find nearest sampled cluster
+        // Step 2: Process every clustered vertex
         unordered_map<int, int> new_cluster;
         
         for (int v : g.nodes) {
@@ -204,57 +204,83 @@ SpannerResult baswana_sen(Graph& g, int k, int seed = 42) {
                 continue;
             }
             
-            if (sampled.count(cluster[v])) {
-                new_cluster[v] = cluster[v];
-                continue;
-            }
+            int v_old_cluster = cluster[v];
             
-            // Find nearest neighbor in a sampled cluster
-            int best_neighbor = -1;
-            double best_weight = 1e18;
-            
+            // Group neighbors by cluster -> lightest edge
+            unordered_map<int, pair<int, double>> lightest_to_cluster;
             for (auto& [u, w] : g.adj[v]) {
                 edges_processed++;
-                if (cluster[u] != -1 && sampled.count(cluster[u])) {
-                    if (w < best_weight) {
-                        best_weight = w;
-                        best_neighbor = u;
-                    }
+                int uc = cluster[u];
+                if (uc == -1) continue;
+                if (!lightest_to_cluster.count(uc) || w < lightest_to_cluster[uc].second) {
+                    lightest_to_cluster[uc] = {u, w};
                 }
             }
             
-            if (best_neighbor != -1) {
-                new_cluster[v] = cluster[best_neighbor];
-                int a = min(v, best_neighbor), b = max(v, best_neighbor);
-                if (!spanner_edge_set.count({a, b})) {
-                    spanner_edge_set.insert({a, b});
-                    edge_weights[pack(a, b)] = best_weight;
-                    edges_added++;
-                }
-            } else {
-                new_cluster[v] = -1;
-                vertices_unclustered++;
+            if (sampled.count(v_old_cluster)) {
+                // Case A: v's cluster survived
+                new_cluster[v] = v_old_cluster;
                 
-                // Add lightest inter-cluster edges
-                unordered_set<int> added_clusters;
-                vector<pair<double, pair<int, double>>> sorted_neighbors;
-                for (auto& [u, w] : g.adj[v]) {
-                    sorted_neighbors.push_back({w, {u, w}});
-                }
-                sort(sorted_neighbors.begin(), sorted_neighbors.end());
-                
-                for (auto& [_, nw] : sorted_neighbors) {
-                    auto& [u, w] = nw;
-                    edges_processed++;
-                    int uc = cluster[u];
-                    if (uc != -1 && !added_clusters.count(uc)) {
-                        int a = min(v, u), b = max(v, u);
+                // Add lightest edge to each neighboring cluster that is DIFFERENT
+                // and did NOT survive
+                for (auto& [nc, uw] : lightest_to_cluster) {
+                    if (nc != v_old_cluster && !sampled.count(nc)) {
+                        int a = min(v, uw.first), b = max(v, uw.first);
                         if (!spanner_edge_set.count({a, b})) {
                             spanner_edge_set.insert({a, b});
-                            edge_weights[pack(a, b)] = w;
+                            edge_weights[pack(a, b)] = uw.second;
                             edges_added++;
                         }
-                        added_clusters.insert(uc);
+                    }
+                }
+            } else {
+                // Case B: v's cluster did NOT survive
+                // Try to attach to nearest surviving cluster
+                int best_neighbor = -1;
+                double best_weight = 1e18;
+                int best_cluster_id = -1;
+                
+                for (auto& [nc, uw] : lightest_to_cluster) {
+                    if (sampled.count(nc) && uw.second < best_weight) {
+                        best_weight = uw.second;
+                        best_neighbor = uw.first;
+                        best_cluster_id = nc;
+                    }
+                }
+                
+                if (best_neighbor != -1) {
+                    new_cluster[v] = best_cluster_id;
+                    int a = min(v, best_neighbor), b = max(v, best_neighbor);
+                    if (!spanner_edge_set.count({a, b})) {
+                        spanner_edge_set.insert({a, b});
+                        edge_weights[pack(a, b)] = best_weight;
+                        edges_added++;
+                    }
+                    
+                    // Add lightest edge to each non-surviving neighboring cluster
+                    for (auto& [nc, uw] : lightest_to_cluster) {
+                        if (nc != best_cluster_id && !sampled.count(nc)) {
+                            int a2 = min(v, uw.first), b2 = max(v, uw.first);
+                            if (!spanner_edge_set.count({a2, b2})) {
+                                spanner_edge_set.insert({a2, b2});
+                                edge_weights[pack(a2, b2)] = uw.second;
+                                edges_added++;
+                            }
+                        }
+                    }
+                } else {
+                    // No surviving cluster neighbor — v becomes unclustered
+                    new_cluster[v] = -1;
+                    vertices_unclustered++;
+                    
+                    // Add lightest edge to every neighboring cluster
+                    for (auto& [nc, uw] : lightest_to_cluster) {
+                        int a = min(v, uw.first), b = max(v, uw.first);
+                        if (!spanner_edge_set.count({a, b})) {
+                            spanner_edge_set.insert({a, b});
+                            edge_weights[pack(a, b)] = uw.second;
+                            edges_added++;
+                        }
                     }
                 }
             }

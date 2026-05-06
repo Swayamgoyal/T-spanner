@@ -54,18 +54,43 @@
 \end{frame}
 
 % Slide 4: Experimental Methodology & Topologies
-\begin{frame}{``Torture-Testing'' the Algorithm}
-    We analyzed the spanner across four distinct graph geometries to evaluate structural dependencies:
-    \vspace{0.5cm}
-    \begin{enumerate}
-        \item \textbf{Social Networks (Barab\'asi-Albert):} Scale-free, hub-heavy. Natural ``hub-and-spoke'' efficiency allows massive sparsification instantly.
-        \item \textbf{Road Networks (Grid/Near-Planar):} No hubs, heavily bottlenecked. The hardest topology for spanners to compress without severe stretch penalties.
-        \item \textbf{Random Graphs (Erd\H{o}s-R\'enyi):} High expansion with uniform randomness. Tests the theoretical Moore Bound.
-        \item \textbf{Small-World (Watts-Strogatz):} Regular grids with random ``shortcuts.'' Demonstrates the high value of long-range edges.
-    \end{enumerate}
+\begin{frame}{Dataset Deep-Dive}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            We tested the spanner on diverse network structures:
+            \begin{itemize}
+                \item \textbf{Social Networks (ego-Facebook):} Scale-free, power-law degree distributions. High-degree hubs test instant sparseness.
+                \item \textbf{Road Networks (roadNet-CA):} Near-planar with small average degree ($<3$). Tests severe detours/bottlenecks.
+                \item \textbf{Random (Erd\H{o}s-R\'enyi):} High expansion graphs to verify basic Moore bounds.
+                \item \textbf{Small-World (Watts-Strogatz):} Grids rewired to add random "shortcuts". Tests clustering coefficients.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \centering
+            % Ensure image exists at this relative path when compiling
+            \includegraphics[width=\textwidth]{../results/plots/advanced_improvement.pdf}
+        \end{column}
+    \end{columns}
 \end{frame}
 
-% Slide 5: Our Novel Contribution: HAS
+% Slide 5: The Stretch Analysis
+\begin{frame}{Analysis: Stretch Constraints \& Topology}
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \begin{itemize}
+                \item Stretch represents the maximum "detour" length added.
+                \item Random and Scale-Free graphs enjoy consistently low average stretch because hubs provide centralized shortcuts.
+                \item Grids require significantly more edges to prevent severe stretch spikes.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.6\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../results/plots/stretch_analysis.pdf}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% Slide 6: Our Novel Contribution: HAS
 \begin{frame}{The Hybrid Adaptive Spanner (HAS)}
     \begin{itemize}
         \item \textbf{The Problem:} Standard Baswana-Sen builds generic clusters. In specific topologies (like road networks), this leads to wasted redundant edges.
@@ -92,12 +117,12 @@
         \begin{column}{0.5\textwidth}
             \centering
             % Ensure image exists at this relative path when compiling
-            \includegraphics[width=\textwidth]{../results/plots/has_vs_bs_analysis.png}
+            \includegraphics[width=\textwidth]{../results/plots/has_vs_bs_analysis.pdf}
         \end{column}
     \end{columns}
 \end{frame}
 
-% Slide 7: System Scaling & Language Performance
+% Slide 8: System Scaling & Language Performance
 \begin{frame}{Engineering for Scale: Python vs. C++}
     \begin{columns}
         \begin{column}{0.5\textwidth}
@@ -109,12 +134,45 @@
         \end{column}
         \begin{column}{0.5\textwidth}
             \centering
-            \includegraphics[width=\textwidth]{../results/plots/language_comparison.png}
+            \includegraphics[width=\textwidth]{../results/plots/language_comparison.pdf}
         \end{column}
     \end{columns}
 \end{frame}
 
-% Slide 9: Network Resilience
+% Slide 9: Algorithm Stability & Variance
+\begin{frame}{Algorithm Stability & Seed Variance}
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \begin{itemize}
+                \item Baswana-Sen relies heavily on random cluster-center sampling.
+                \item How does the choice of random seed affect the output size and stretch?
+                \item We measured variance across 100 seeds to prove the algorithm's consistency under differing initial conditions.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.6\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../results/plots/seed_variance.pdf}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% Slide 10: Energy Interference Proxy
+\begin{frame}{Application: Energy \& Interference Optimization}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{itemize}
+                \item In wireless networks, fewer edges directly correlates to less signal interference.
+                \item By tracking edge count mathematically, we can predict energy savings for wireless hardware dynamically routed over the spanner.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../results/plots/energy_proxy.pdf}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% Slide 11: Network Resilience
 \begin{frame}{Network Resilience: Fault Tolerance}
     \begin{columns}
         \begin{column}{0.5\textwidth}
@@ -126,12 +184,12 @@
         \end{column}
         \begin{column}{0.5\textwidth}
             \centering
-            \includegraphics[width=\textwidth]{../results/plots/fault_tolerance.png}
+            \includegraphics[width=\textwidth]{../results/plots/fault_tolerance.pdf}
         \end{column}
     \end{columns}
 \end{frame}
 
-% Slide 10: Conclusion & Deliverables
+% Slide 12: Conclusion & Deliverables
 \begin{frame}{Summary of Achievements}
     \begin{columns}
         \begin{column}{0.5\textwidth}
@@ -143,7 +201,7 @@
         \end{column}
         \begin{column}{0.5\textwidth}
             \centering
-            \includegraphics[width=\textwidth]{../results/plots/advanced_3way_comparison.png}
+            \includegraphics[width=\textwidth]{../results/plots/advanced_3way_comparison.pdf}
         \end{column}
     \end{columns}
     \vspace{0.5cm}
